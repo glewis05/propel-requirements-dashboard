@@ -132,3 +132,8 @@ Without these, the dashboard defaults all users to "Developer" role.
 | INSERT succeeds but SELECT returns nothing | RLS blocking read | Run as superuser or add SELECT policy |
 | Status constraint error | Wrong case | Use 'Active' not 'active' |
 | Queries fail with syntax errors in Supabase SQL Editor | Editor appending metadata | Use "No limit" setting or single-line queries |
+| Build fails with "type 'never'" errors | Supabase type inference issue | Temporarily: `ignoreBuildErrors: true` in next.config.js. Properly: regenerate types with `supabase gen types typescript` |
+
+## Known Technical Debt
+
+1. **TypeScript checking disabled in builds** - `next.config.js` has `typescript.ignoreBuildErrors: true` and `eslint.ignoreDuringBuilds: true`. Need to fix Supabase type inference and re-enable.
