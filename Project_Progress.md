@@ -1,7 +1,7 @@
 # Requirements Dashboard - Development Status
 
 **Last Updated:** January 25, 2026
-**Session:** Phase 2 - Filtering & Search Implementation
+**Session:** Phase 2 - Story Detail View & Loading States
 
 ---
 
@@ -71,9 +71,16 @@ propel-requirements-dashboard/
 │   │   └── auth/callback/route.ts
 │   └── (dashboard)/
 │       ├── layout.tsx           # Sidebar + header layout
-│       ├── dashboard/page.tsx   # Stats overview
-│       ├── stories/page.tsx     # Story list with filters
-│       ├── stories/[id]/page.tsx # Story detail view
+│       ├── dashboard/
+│       │   ├── page.tsx         # Stats overview
+│       │   ├── loading.tsx      # Dashboard loading skeleton
+│       │   └── error.tsx        # Dashboard error boundary
+│       ├── stories/
+│       │   ├── page.tsx         # Story list with filters
+│       │   ├── loading.tsx      # Stories loading skeleton
+│       │   ├── error.tsx        # Stories error boundary
+│       │   └── [id]/page.tsx    # Story detail with collapsible sections
+│       ├── error.tsx            # Global dashboard error boundary
 │       ├── approvals/page.tsx   # Approval queue
 │       ├── reports/page.tsx     # Reports placeholder
 │       └── admin/users/page.tsx # User management
@@ -81,7 +88,11 @@ propel-requirements-dashboard/
 │   ├── sidebar.tsx              # Role-based navigation
 │   └── header.tsx               # User menu, notifications
 ├── components/stories/
-│   └── stories-list.tsx         # Client-side filtering & search
+│   ├── stories-list.tsx         # Client-side filtering & search
+│   └── collapsible-section.tsx  # Reusable expand/collapse component
+├── components/ui/
+│   ├── loading-spinner.tsx      # Loading spinner with sizes
+│   └── skeleton.tsx             # Skeleton loaders for loading states
 ├── lib/
 │   ├── supabase/
 │   │   ├── client.ts            # Browser client
@@ -118,7 +129,44 @@ propel-requirements-dashboard/
 - Headings/Body: DM Sans
 - Code/IDs: JetBrains Mono
 
-### 5. Authentication Testing ✅ (This Session)
+### 5. Loading States & Error Boundaries ✅ (Jan 25, 2026)
+
+**Loading Skeletons:**
+- `components/ui/skeleton.tsx` - Reusable skeleton components (Skeleton, SkeletonText, SkeletonCard, SkeletonTableRow, SkeletonStoriesTable, SkeletonStatsGrid)
+- `components/ui/loading-spinner.tsx` - Spinner with sizes (sm, md, lg) and LoadingPage component
+- `app/(dashboard)/dashboard/loading.tsx` - Dashboard loading skeleton
+- `app/(dashboard)/stories/loading.tsx` - Stories list loading skeleton
+
+**Error Boundaries:**
+- `app/(dashboard)/error.tsx` - Global dashboard error boundary
+- `app/(dashboard)/dashboard/error.tsx` - Dashboard-specific error boundary
+- `app/(dashboard)/stories/error.tsx` - Stories-specific error boundary
+
+All error boundaries include retry functionality and navigation back to dashboard.
+
+### 6. Story Detail View Improvements ✅ (Jan 25, 2026)
+
+**Collapsible Section Component:**
+- `components/stories/collapsible-section.tsx` - Reusable expand/collapse component with icons, badges, and animation
+
+**Story Detail Page Features:**
+- Header with story ID, status badge, priority badge, technical indicator
+- Program name lookup (fetches from programs table instead of showing ID)
+- Collapsible sections for:
+  - User Story (with role/capability/benefit breakdown)
+  - Acceptance Criteria
+  - Success Metrics
+  - Internal Notes (admin view)
+  - Meeting Context
+  - Client Feedback
+  - Comments with add comment form
+- Sidebar with:
+  - Details card (Program, Category, Roadmap Target, Version, Created, Updated)
+  - Approval Info (when applicable)
+  - Version History (last 5 versions)
+- Edit Story link button
+
+### 7. Authentication Testing ✅ (Previous Session)
 
 **Issues Fixed:**
 - Added missing `autoprefixer` dev dependency (`npm install -D autoprefixer`)
@@ -200,9 +248,9 @@ propel-requirements-dashboard/
 ### Phase 2: Core Dashboard & Data Display (In Progress)
 - [ ] Implement virtual scrolling for large story lists
 - [x] Add client-side filtering/search functionality ✅
-- [ ] Create story detail view with expand/collapse sections
+- [x] Create story detail view with expand/collapse sections ✅
 - [ ] Implement real-time subscriptions for live updates
-- [ ] Add loading states and error boundaries
+- [x] Add loading states and error boundaries ✅
 - [ ] Mobile responsive refinements
 
 ### Phase 3: CRUD Operations & Versioning
