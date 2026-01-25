@@ -50,10 +50,20 @@ Four roles with hierarchical permissions:
 ### Database Schema (Key Tables)
 - `users` - User profiles with `role`, `auth_id` (links to Supabase Auth), `assigned_programs`
 - `user_stories` - Requirements with status workflow, locking for concurrent edits
-- `programs` - Program/project containers
+- `programs` - Program/project containers (NOTE: uses `name` column, not `program_name`)
 - `story_comments` - Threaded discussions (RLS enforced)
 - `story_approvals` - Immutable approval audit trail (RLS enforced)
 - `story_versions` - Automatic version history via trigger (RLS enforced)
+
+### Programs Table Schema
+| Column | Type | Notes |
+|--------|------|-------|
+| program_id | TEXT (PK) | Unique identifier |
+| name | TEXT | Display name (NOT program_name) |
+| prefix | TEXT | Short code (e.g., P4M, GRXC) |
+| description | TEXT | Optional description |
+| client_id | TEXT (FK) | Reference to clients |
+| status | TEXT | 'Active', etc. |
 
 ### Database Functions (call via `supabase.rpc()`)
 - `acquire_story_lock(p_story_id)` - Get 5-minute edit lock
@@ -88,13 +98,15 @@ Future requirement to support multiple clients (e.g., Providence, Kaiser):
 - Design database schema with client isolation in mind
 
 ## Current Phase
-Phase 1: Foundation & Authentication ✅ COMPLETE (Jan 25, 2026)
-- Auth working, dashboard functional
-- Admin user (Glen Lewis) linked and verified
-- Deployed to: `https://propel-requirements-dashboard.vercel.app`
-- GitHub Actions CI/CD configured
+Phase 2: Core Dashboard & Data Display (In Progress)
+- [x] Client-side filtering & search ✅
+- [ ] Virtual scrolling for large lists
+- [ ] Story detail view with expand/collapse
+- [ ] Real-time subscriptions
+- [ ] Loading states and error boundaries
+- [ ] Mobile responsive refinements
 
-**Next Phase:** Phase 2 - Core Dashboard & Data Display
+**Completed:** Phase 1 - Foundation & Authentication
 
 ## User Setup (Important)
 
@@ -117,15 +129,27 @@ RETURNING *;
 
 **Get Auth UUID:** Supabase Dashboard → Authentication → Users → Copy User UID
 
-## RLS Policies on `users` Table
+## RLS Policies (Required)
 
-These policies are required for the app to read user profiles:
+All tables have RLS enabled. These policies are required for the app to function:
+
+### `users` Table
 ```sql
 CREATE POLICY "Users can read own profile" ON users FOR SELECT USING (auth_id = auth.uid());
 CREATE POLICY "Users can update own profile" ON users FOR UPDATE USING (auth_id = auth.uid());
 ```
 
-Without these, the dashboard defaults all users to "Developer" role.
+### `programs` Table
+```sql
+CREATE POLICY "Anyone can read programs" ON programs FOR SELECT USING (true);
+```
+
+### `user_stories` Table
+```sql
+CREATE POLICY "Authenticated users can read stories" ON user_stories FOR SELECT USING (auth.uid() IS NOT NULL);
+```
+
+Without these policies, the app shows empty tables even when data exists.
 
 ## Troubleshooting
 
@@ -136,6 +160,8 @@ Without these, the dashboard defaults all users to "Developer" role.
 | Status constraint error | Wrong case | Use 'Active' not 'active' |
 | Queries fail with syntax errors in Supabase SQL Editor | Editor appending metadata | Use "No limit" setting or single-line queries |
 | Build fails with "type 'never'" errors | Supabase type inference issue | Temporarily: `ignoreBuildErrors: true` in next.config.js. Properly: regenerate types with `supabase gen types typescript` |
+| Stories/programs table shows empty | RLS blocking SELECT | Add SELECT policies for `programs` and `user_stories` tables |
+| Version trigger fails on INSERT | No authenticated user | Disable trigger: `ALTER TABLE user_stories DISABLE TRIGGER user_stories_version_trigger;` then re-enable after |
 
 ## Known Technical Debt
 

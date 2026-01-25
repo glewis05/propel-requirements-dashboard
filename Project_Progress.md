@@ -1,7 +1,7 @@
 # Requirements Dashboard - Development Status
 
 **Last Updated:** January 25, 2026
-**Session:** Auth Setup & Project Review
+**Session:** Phase 2 - Filtering & Search Implementation
 
 ---
 
@@ -80,6 +80,8 @@ propel-requirements-dashboard/
 ├── components/layout/
 │   ├── sidebar.tsx              # Role-based navigation
 │   └── header.tsx               # User menu, notifications
+├── components/stories/
+│   └── stories-list.tsx         # Client-side filtering & search
 ├── lib/
 │   ├── supabase/
 │   │   ├── client.ts            # Browser client
@@ -195,9 +197,9 @@ propel-requirements-dashboard/
 - [x] Deploy initial version to Vercel ✅
 - [x] Configure GitHub Actions for CI/CD ✅
 
-### Phase 2: Core Dashboard & Data Display
+### Phase 2: Core Dashboard & Data Display (In Progress)
 - [ ] Implement virtual scrolling for large story lists
-- [ ] Add client-side filtering/search functionality
+- [x] Add client-side filtering/search functionality ✅
 - [ ] Create story detail view with expand/collapse sections
 - [ ] Implement real-time subscriptions for live updates
 - [ ] Add loading states and error boundaries
@@ -295,6 +297,14 @@ Row Level Security is enabled on the `users` table. The following policies were 
 
 **Important:** Without these policies, the app cannot fetch the user's role after login, causing it to default to "Developer".
 
+### RLS Policies on `programs` Table
+Row Level Security is enabled. Added (Jan 25, 2026):
+- `"Anyone can read programs"` - SELECT with `USING (true)` (public read access)
+
+### RLS Policies on `user_stories` Table
+Row Level Security is enabled. Added (Jan 25, 2026):
+- `"Authenticated users can read stories"` - SELECT where `auth.uid() IS NOT NULL`
+
 ### RLS Policies on Other Tables
 Row Level Security is enabled on new tables (story_comments, story_approvals, story_versions). For development/testing with service role, RLS is bypassed. For client-side queries with anon key, policies will enforce access based on user role.
 
@@ -330,7 +340,27 @@ The Supabase client returns `never` types when TypeScript can't infer table type
 - Adding explicit type casts to queries
 - Updating Supabase client typing
 
-**7. User Setup SQL Reference**
+**7. Programs Table Schema**
+The `programs` table uses `name` (not `program_name`) for the program display name. Key columns:
+- `program_id` (TEXT, PK) - Unique identifier
+- `name` (TEXT) - Display name
+- `prefix` (TEXT) - Short code
+- `description` (TEXT)
+- `status` (TEXT) - 'Active', etc.
+- `client_id` (TEXT, FK) - Reference to clients table
+
+**8. Version Trigger Requires Auth**
+When inserting test data directly via SQL Editor, disable the `user_stories_version_trigger` first:
+```sql
+ALTER TABLE user_stories DISABLE TRIGGER user_stories_version_trigger;
+-- Insert data here
+ALTER TABLE user_stories ENABLE TRIGGER user_stories_version_trigger;
+```
+
+**9. RLS Policies Required for Data Access**
+Both `programs` and `user_stories` tables have RLS enabled. Without SELECT policies, the app shows empty tables even when data exists.
+
+**10. User Setup SQL Reference**
 ```sql
 -- Create new user linked to Supabase Auth
 INSERT INTO users (user_id, name, email, role, auth_id, status, created_at, updated_at)
@@ -349,6 +379,12 @@ RETURNING *;
 -- RLS policies needed for users table
 CREATE POLICY "Users can read own profile" ON users FOR SELECT USING (auth_id = auth.uid());
 CREATE POLICY "Users can update own profile" ON users FOR UPDATE USING (auth_id = auth.uid());
+
+-- RLS policies needed for programs table
+CREATE POLICY "Anyone can read programs" ON programs FOR SELECT USING (true);
+
+-- RLS policies needed for user_stories table
+CREATE POLICY "Authenticated users can read stories" ON user_stories FOR SELECT USING (auth.uid() IS NOT NULL);
 ```
 
 ---
