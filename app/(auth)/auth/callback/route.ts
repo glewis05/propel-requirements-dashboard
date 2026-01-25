@@ -1,5 +1,8 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
+import type { Database } from "@/types/database"
+
+type UsersUpdate = Database["public"]["Tables"]["users"]["Update"]
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
@@ -14,9 +17,10 @@ export async function GET(request: Request) {
       // Update last_login_at for the user
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
+        const updateData: UsersUpdate = { last_login_at: new Date().toISOString() }
         await supabase
           .from("users")
-          .update({ last_login_at: new Date().toISOString() })
+          .update(updateData)
           .eq("auth_id", user.id)
       }
 
