@@ -1,7 +1,7 @@
 # Requirements Dashboard - Development Status
 
 **Last Updated:** January 25, 2026
-**Session:** Phase 2 - Story Detail View & Loading States
+**Session:** Phase 2 - Real-time Subscriptions
 
 ---
 
@@ -89,10 +89,16 @@ propel-requirements-dashboard/
 │   └── header.tsx               # User menu, notifications
 ├── components/stories/
 │   ├── stories-list.tsx         # Client-side filtering & search
-│   └── collapsible-section.tsx  # Reusable expand/collapse component
+│   ├── stories-list-realtime.tsx # Real-time wrapper for stories list
+│   ├── collapsible-section.tsx  # Reusable expand/collapse component
+│   └── comments-section.tsx     # Real-time comments section
 ├── components/ui/
 │   ├── loading-spinner.tsx      # Loading spinner with sizes
 │   └── skeleton.tsx             # Skeleton loaders for loading states
+├── hooks/
+│   ├── use-realtime-subscription.ts  # Generic Supabase subscription hook
+│   ├── use-stories-subscription.ts   # Stories list subscription
+│   └── use-comments-subscription.ts  # Comments subscription
 ├── lib/
 │   ├── supabase/
 │   │   ├── client.ts            # Browser client
@@ -166,7 +172,36 @@ All error boundaries include retry functionality and navigation back to dashboar
   - Version History (last 5 versions)
 - Edit Story link button
 
-### 7. Authentication Testing ✅ (Previous Session)
+### 7. Real-time Subscriptions ✅ (Jan 25, 2026)
+
+**Architecture:** Wrapper component pattern - server components fetch initial data, client wrappers add real-time subscriptions.
+
+**Hooks Created:**
+- `hooks/use-realtime-subscription.ts` - Generic subscription hook with proper cleanup
+- `hooks/use-stories-subscription.ts` - Stories list subscription (INSERT/UPDATE/DELETE)
+- `hooks/use-comments-subscription.ts` - Comments subscription filtered by story_id
+
+**Components Created:**
+- `components/stories/stories-list-realtime.tsx` - Wrapper with "Live" indicator
+- `components/stories/comments-section.tsx` - Real-time comments for story detail
+
+**Pages Updated:**
+- `app/(dashboard)/stories/page.tsx` - Uses `StoriesListRealtime` wrapper
+- `app/(dashboard)/stories/[id]/page.tsx` - Uses `CommentsSection` component
+
+**Features:**
+- Stories list updates instantly when stories are added/edited/deleted
+- Comments appear in real-time without page refresh
+- "Live" indicator shows when real-time connection is active
+- Error banner displays if subscription fails
+- Proper cleanup on component unmount (no memory leaks)
+
+**Supabase Configuration Required:**
+Enable Realtime on tables in Dashboard > Database > Replication:
+- `user_stories`
+- `story_comments`
+
+### 8. Authentication Testing ✅ (Previous Session)
 
 **Issues Fixed:**
 - Added missing `autoprefixer` dev dependency (`npm install -D autoprefixer`)
@@ -246,11 +281,11 @@ All error boundaries include retry functionality and navigation back to dashboar
 - [x] Configure GitHub Actions for CI/CD ✅
 
 ### Phase 2: Core Dashboard & Data Display (In Progress)
-- [ ] Implement virtual scrolling for large story lists
 - [x] Add client-side filtering/search functionality ✅
 - [x] Create story detail view with expand/collapse sections ✅
-- [ ] Implement real-time subscriptions for live updates
 - [x] Add loading states and error boundaries ✅
+- [x] Implement real-time subscriptions for live updates ✅
+- [ ] Implement virtual scrolling for large story lists
 - [ ] Mobile responsive refinements
 
 ### Phase 3: CRUD Operations & Versioning

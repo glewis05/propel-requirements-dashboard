@@ -102,8 +102,8 @@ Phase 2: Core Dashboard & Data Display (In Progress)
 - [x] Client-side filtering & search ✅
 - [x] Story detail view with expand/collapse ✅
 - [x] Loading states and error boundaries ✅
+- [x] Real-time subscriptions ✅
 - [ ] Virtual scrolling for large lists
-- [ ] Real-time subscriptions
 - [ ] Mobile responsive refinements
 
 **Completed:** Phase 1 - Foundation & Authentication
@@ -112,7 +112,14 @@ Phase 2: Core Dashboard & Data Display (In Progress)
 
 ### Stories
 - `components/stories/stories-list.tsx` - Client component with filtering (program, status, priority) and search
+- `components/stories/stories-list-realtime.tsx` - Wrapper that adds real-time subscriptions to StoriesList
 - `components/stories/collapsible-section.tsx` - Reusable expand/collapse section with icon, badge support
+- `components/stories/comments-section.tsx` - Real-time comments for story detail page
+
+### Hooks (Real-time Subscriptions)
+- `hooks/use-realtime-subscription.ts` - Generic Supabase real-time subscription hook with cleanup
+- `hooks/use-stories-subscription.ts` - Stories list subscription (INSERT/UPDATE/DELETE)
+- `hooks/use-comments-subscription.ts` - Comments subscription filtered by story_id
 
 ### UI
 - `components/ui/skeleton.tsx` - Skeleton loaders (Skeleton, SkeletonText, SkeletonCard, SkeletonTableRow, SkeletonStoriesTable, SkeletonStatsGrid)
@@ -164,6 +171,21 @@ CREATE POLICY "Authenticated users can read stories" ON user_stories FOR SELECT 
 ```
 
 Without these policies, the app shows empty tables even when data exists.
+
+## Supabase Realtime Configuration
+
+Real-time subscriptions require enabling Realtime on tables:
+
+1. Go to Supabase Dashboard → **Database** → **Replication**
+2. Under "Supabase Realtime", add tables:
+   - `user_stories` - For stories list live updates
+   - `story_comments` - For comments live updates
+
+Or via SQL:
+```sql
+ALTER PUBLICATION supabase_realtime ADD TABLE user_stories;
+ALTER PUBLICATION supabase_realtime ADD TABLE story_comments;
+```
 
 ## Troubleshooting
 
