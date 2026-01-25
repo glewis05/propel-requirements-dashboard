@@ -100,13 +100,27 @@ Future requirement to support multiple clients (e.g., Providence, Kaiser):
 ## Current Phase
 Phase 2: Core Dashboard & Data Display (In Progress)
 - [x] Client-side filtering & search ✅
+- [x] Story detail view with expand/collapse ✅
+- [x] Loading states and error boundaries ✅
 - [ ] Virtual scrolling for large lists
-- [ ] Story detail view with expand/collapse
 - [ ] Real-time subscriptions
-- [ ] Loading states and error boundaries
 - [ ] Mobile responsive refinements
 
 **Completed:** Phase 1 - Foundation & Authentication
+
+## Key Components
+
+### Stories
+- `components/stories/stories-list.tsx` - Client component with filtering (program, status, priority) and search
+- `components/stories/collapsible-section.tsx` - Reusable expand/collapse section with icon, badge support
+
+### UI
+- `components/ui/skeleton.tsx` - Skeleton loaders (Skeleton, SkeletonText, SkeletonCard, SkeletonTableRow, SkeletonStoriesTable, SkeletonStatsGrid)
+- `components/ui/loading-spinner.tsx` - Loading spinner with sizes (sm, md, lg) and LoadingPage component
+
+### Layout
+- `components/layout/sidebar.tsx` - Role-based navigation
+- `components/layout/header.tsx` - User menu, notifications
 
 ## User Setup (Important)
 
