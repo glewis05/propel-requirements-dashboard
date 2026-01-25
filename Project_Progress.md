@@ -472,6 +472,31 @@ CREATE POLICY "Authenticated users can read stories" ON user_stories FOR SELECT 
 
 ---
 
+## Next Steps When Resuming
+
+### Immediate (Before Testing Real-time)
+1. **Enable Supabase Realtime** on tables:
+   - Go to Supabase Dashboard → Database → Replication
+   - Add `user_stories` and `story_comments` to Supabase Realtime
+   - Or run: `ALTER PUBLICATION supabase_realtime ADD TABLE user_stories, story_comments;`
+
+2. **Test Real-time Features:**
+   - Open stories page in two browser tabs
+   - Edit a story in Supabase SQL editor, verify both tabs update
+   - Add a comment via SQL, verify it appears on story detail page
+
+### Remaining Phase 2 Work
+- [ ] Virtual scrolling for large story lists (if needed)
+- [ ] Mobile responsive refinements
+
+### Phase 3: CRUD Operations & Versioning
+- Story creation form with validation
+- Inline editing for story fields
+- Story deletion with confirmation
+- Rich text editor for acceptance criteria
+
+---
+
 ## Files to Review Before Resuming
 
 1. `CLAUDE.md` - Quick reference for Claude Code sessions
