@@ -137,3 +137,16 @@ Without these, the dashboard defaults all users to "Developer" role.
 ## Known Technical Debt
 
 1. **TypeScript checking disabled in builds** - `next.config.js` has `typescript.ignoreBuildErrors: true` and `eslint.ignoreDuringBuilds: true`. Need to fix Supabase type inference and re-enable.
+
+## Future Features (Backlog)
+
+### Risk Assessment Tool
+Help users without software risk management experience evaluate requirements for prioritization and scheduling. Features may include:
+- Risk scoring matrix (likelihood × impact)
+- Guided assessment questionnaire
+- Risk categories: technical complexity, dependencies, resources, skills, integration, security, timeline
+- Visual risk indicators on story cards
+- Risk-adjusted priority recommendations
+- AI-assisted risk identification from story content
+
+See `Project_Progress.md` for full details.

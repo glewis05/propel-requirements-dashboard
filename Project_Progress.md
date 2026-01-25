@@ -241,6 +241,48 @@ Configure automated testing and deployment pipeline.
 
 ---
 
+## Future Features (Backlog)
+
+### Risk Assessment Tool
+**Added:** January 25, 2026
+
+**Problem Statement:**
+Many stakeholders involved in prioritizing and scheduling requirements lack experience in software development risk management. They need guidance when evaluating requirements to make informed decisions about priority and timeline.
+
+**Proposed Solution:**
+A risk assessment capability integrated into the requirements dashboard that helps users identify and evaluate risks associated with each requirement/user story.
+
+**Potential Features:**
+- Risk scoring matrix (likelihood × impact)
+- Guided risk assessment questionnaire for each story
+- Risk categories relevant to software development:
+  - Technical complexity
+  - Dependencies on other systems/stories
+  - Resource availability
+  - Knowledge/skill gaps
+  - Integration risks
+  - Security/compliance implications
+  - Timeline constraints
+- Visual risk indicators on story cards (red/yellow/green)
+- Risk-adjusted priority recommendations
+- Risk trend tracking over time
+- Risk reports for stakeholder review
+
+**Target Users:**
+- Program Managers (primary)
+- Portfolio Managers
+- Stakeholders without technical risk management background
+
+**Dependencies:**
+- Core CRUD operations (Phase 3)
+- Approval workflow (Phase 4)
+
+**Notes:**
+- Consider AI-assisted risk identification based on story content
+- Align with FDA 21 CFR Part 11 compliance requirements where applicable
+
+---
+
 ## Important Notes
 
 ### Version Trigger Active
