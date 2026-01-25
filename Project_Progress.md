@@ -171,29 +171,29 @@ propel-requirements-dashboard/
 - Linked Supabase Auth UUID: `63e6da88-1537-4e4b-8071-32be64e47592`
 - Added RLS policies for users table (read/update own profile)
 
-### 2. Create Vercel Account & Deploy (NEXT)
+### 2. Vercel Deployment ✅ COMPLETED (Jan 25, 2026)
 
-1. Sign up at vercel.com (use GitHub OAuth for easy repo connection)
-2. Import the `propel-requirements-dashboard` repository
-3. Configure environment variables in Vercel:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-4. Add production URL to Supabase Auth redirect URLs
+- Deployed to: `https://propel-requirements-dashboard.vercel.app`
+- Environment variables configured in Vercel
+- Auth callback URL added to Supabase: `https://propel-requirements-dashboard.vercel.app/auth/callback`
 
-### 3. Set Up GitHub Actions CI/CD
+### 3. GitHub Actions CI/CD ✅ COMPLETED (Jan 25, 2026)
 
-Configure automated testing and deployment pipeline.
+- Workflow file: `.github/workflows/ci.yml`
+- Runs on push to main and pull requests
+- Steps: install dependencies → lint → build
+- GitHub secrets configured: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
 ---
 
 ## What's Left to Do
 
-### Phase 1: Foundation & Authentication (Remaining)
+### Phase 1: Foundation & Authentication ✅ COMPLETE
 - [x] Test magic link authentication end-to-end ✅
 - [x] Link Glen Lewis's `auth_id` and set role to Admin ✅
 - [x] Add RLS policies for users table (read/update own profile) ✅
-- [ ] Deploy initial version to Vercel
-- [ ] Configure GitHub Actions for CI/CD
+- [x] Deploy initial version to Vercel ✅
+- [x] Configure GitHub Actions for CI/CD ✅
 
 ### Phase 2: Core Dashboard & Data Display
 - [ ] Implement virtual scrolling for large story lists
