@@ -3,6 +3,9 @@ import { createClient } from "@/lib/supabase/server"
 import { Plus } from "lucide-react"
 import { StoriesList } from "@/components/stories/stories-list"
 
+// Force dynamic rendering (no caching) so loading state shows
+export const dynamic = 'force-dynamic'
+
 export default async function StoriesPage() {
   const supabase = await createClient()
 

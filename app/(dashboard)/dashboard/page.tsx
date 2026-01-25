@@ -1,6 +1,9 @@
 import { createClient } from "@/lib/supabase/server"
 import { FileText, CheckCircle, Clock, AlertTriangle } from "lucide-react"
 
+// Force dynamic rendering (no caching) so loading state shows
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardPage() {
   const supabase = await createClient()
 
