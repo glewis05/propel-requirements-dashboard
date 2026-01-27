@@ -134,9 +134,9 @@ Phase 4: Approval Workflow (Current)
 - [ ] Approval history timeline
 
 **Upcoming Phases:**
-- Phase 5: AI Features (Relationship Suggestions, Risk Advisor)
-- Phase 6: Collaboration Features (Threading, @mentions, Activity Feed)
-- Phase 7: Reporting & Traceability
+- Phase 5: Collaboration Features (Threading, @mentions, Activity Feed)
+- Phase 6: Reporting & Traceability
+- Phase 7: AI Features (Relationship Suggestions, Risk Advisor)
 - Phase 8: Polish & Launch
 
 **Completed:**

@@ -387,7 +387,21 @@ Enable Realtime on tables in Dashboard > Database > Replication:
 - [ ] Bulk approval functionality
 - [ ] Approval history timeline
 
-### Phase 5: AI Features
+### Phase 5: Collaboration Features
+- [x] Comment submission with real-time updates ✅ (moved to Phase 3)
+- [ ] Comment threading (reply to comments)
+- [ ] @mentions with autocomplete
+- [ ] Activity feed
+- [ ] Developer Q&A workflow
+- [ ] In-app notification center
+
+### Phase 6: Reporting & Traceability
+- [ ] Traceability matrix generation
+- [ ] Coverage gap analysis
+- [ ] PDF/Excel export
+- [ ] Scheduled reports
+
+### Phase 7: AI Features
 **AI Relationship Suggestions**
 - [ ] AI analyzes new stories for similarities
 - [ ] Suggests: "Similar to [X] - link them?"
@@ -403,20 +417,6 @@ Enable Realtime on tables in Dashboard > Database > Replication:
 - [ ] Conversational Interface - Ask follow-up questions
 - [ ] Goal Alignment Detection - How stories support/conflict with goals
 - [ ] Risk Dashboard - Portfolio-level risk visualization
-
-### Phase 6: Collaboration Features
-- [x] Comment submission with real-time updates ✅ (moved to Phase 3)
-- [ ] Comment threading (reply to comments)
-- [ ] @mentions with autocomplete
-- [ ] Activity feed
-- [ ] Developer Q&A workflow
-- [ ] In-app notification center
-
-### Phase 7: Reporting & Traceability
-- [ ] Traceability matrix generation
-- [ ] Coverage gap analysis
-- [ ] PDF/Excel export
-- [ ] Scheduled reports
 
 ### Phase 8: Polish & Launch
 - [ ] Comprehensive testing
