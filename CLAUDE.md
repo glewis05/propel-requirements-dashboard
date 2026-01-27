@@ -165,6 +165,13 @@ Phase 5: Collaboration Features (Current)
 - `parent_story_id` TEXT - References parent story for hierarchy (one level)
 - `related_stories` JSONB - Array of linked story IDs for similar stories
 
+## Email Notifications
+- **Service:** Resend (requires `RESEND_API_KEY` env var)
+- **Settings Page:** `/settings/notifications`
+- **User Preferences:** Stored in `users.notification_preferences` (JSONB)
+- **Notification Types:** status_changes, comments, approvals, mentions
+- **Role-Based Rules:** Defined in `lib/notifications/config.ts`
+
 ## Key Components
 
 ### Stories
@@ -177,6 +184,11 @@ Phase 5: Collaboration Features (Current)
 - `components/stories/version-history.tsx` - Expandable version list with diff comparison
 - `components/stories/related-stories-selector.tsx` - Search and select related/linked stories
 - `components/stories/story-relationships-display.tsx` - Display parent, child, and related story links
+- `components/stories/status-transition.tsx` - Interactive status dropdown with transition modal
+- `components/stories/approval-history-timeline.tsx` - Visual timeline of approvals and changes
+
+### Settings
+- `components/settings/notification-settings-form.tsx` - Email notification opt-in/opt-out toggles
 
 ### Hooks (Real-time Subscriptions)
 - `hooks/use-realtime-subscription.ts` - Generic Supabase real-time subscription hook with cleanup
