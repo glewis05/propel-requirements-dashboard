@@ -2,12 +2,35 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import { sendMentionNotifications } from "@/lib/notifications/service"
+
+interface UserData {
+  user_id: string
+  name: string
+}
+
+interface StoryData {
+  title: string
+}
+
+interface CommentData {
+  id: string
+  story_id: string
+  user_id: string
+  content: string
+  is_question: boolean
+  resolved: boolean
+  parent_comment_id: string | null
+  created_at: string
+  updated_at: string
+}
 
 export async function createComment(
   storyId: string,
   content: string,
   isQuestion: boolean = false,
-  parentCommentId?: string
+  parentCommentId?: string,
+  mentionedUserIds?: string[]
 ) {
   const supabase = await createClient()
 
@@ -22,7 +45,7 @@ export async function createComment(
     .from("users")
     .select("user_id, name")
     .eq("auth_id", user.id)
-    .single()
+    .single() as { data: UserData | null; error: Error | null }
 
   if (userError || !userData) {
     return { success: false, error: "User profile not found" }
@@ -46,13 +69,35 @@ export async function createComment(
       content: content.trim(),
       is_question: isQuestion,
       parent_comment_id: parentCommentId || null,
-    })
+    } as never)
     .select()
-    .single()
+    .single() as { data: CommentData | null; error: Error | null }
 
   if (error) {
     console.error("Error creating comment:", error)
     return { success: false, error: error.message }
+  }
+
+  // Send mention notifications if there are mentioned users
+  if (mentionedUserIds && mentionedUserIds.length > 0 && comment) {
+    // Get story title for the notification
+    const { data: story } = await supabase
+      .from("stories")
+      .select("title")
+      .eq("id", storyId)
+      .single() as { data: StoryData | null; error: unknown }
+
+    // Send notifications asynchronously (don't wait)
+    sendMentionNotifications({
+      storyId,
+      storyTitle: story?.title || "Unknown Story",
+      commentId: comment.id,
+      commentContent: content,
+      mentionerName: userData.name,
+      mentionedUserIds,
+    }).catch((err) => {
+      console.error("Failed to send mention notifications:", err)
+    })
   }
 
   revalidatePath(`/stories/${storyId}`)
@@ -70,7 +115,7 @@ export async function resolveComment(commentId: string, resolved: boolean) {
 
   const { error } = await supabase
     .from("story_comments")
-    .update({ resolved, updated_at: new Date().toISOString() })
+    .update({ resolved, updated_at: new Date().toISOString() } as never)
     .eq("id", commentId)
 
   if (error) {

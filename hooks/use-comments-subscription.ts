@@ -11,6 +11,9 @@ export interface Comment {
   content: string
   is_question: boolean
   resolved: boolean
+  accepted_answer: boolean
+  accepted_at: string | null
+  accepted_by: string | null
   created_at: string
   updated_at: string
   user_name?: string

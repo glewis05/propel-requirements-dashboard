@@ -16,6 +16,8 @@ import {
   User,
 } from "lucide-react"
 import { createComment, resolveComment } from "@/app/(dashboard)/stories/comment-actions"
+import { acceptAnswer, unacceptAnswer } from "@/app/(dashboard)/questions/actions"
+import { MentionInput, extractMentionedUserIds, parseMentionsToText } from "@/components/ui/mention-input"
 
 interface CommentsSectionProps {
   storyId: string
@@ -25,6 +27,9 @@ interface CommentsSectionProps {
 interface CommentWithReplies extends Comment {
   replies: CommentWithReplies[]
   user_name?: string
+  accepted_answer: boolean
+  accepted_at: string | null
+  accepted_by: string | null
 }
 
 export function CommentsSection({
@@ -85,6 +90,14 @@ export function CommentsSection({
     await resolveComment(commentId, resolved)
   }
 
+  const handleAcceptAnswer = async (commentId: string, questionId: string) => {
+    await acceptAnswer(commentId, questionId, storyId)
+  }
+
+  const handleUnacceptAnswer = async (commentId: string, questionId: string) => {
+    await unacceptAnswer(commentId, questionId, storyId)
+  }
+
   return (
     <CollapsibleSection
       title="Comments"
@@ -122,6 +135,8 @@ export function CommentsSection({
               collapsedThreads={collapsedThreads}
               toggleThread={toggleThread}
               onResolve={handleResolve}
+              onAcceptAnswer={handleAcceptAnswer}
+              onUnacceptAnswer={handleUnacceptAnswer}
             />
           ))}
         </div>
@@ -150,6 +165,9 @@ interface CommentThreadProps {
   collapsedThreads: Set<string>
   toggleThread: (id: string) => void
   onResolve: (id: string, resolved: boolean) => void
+  onAcceptAnswer: (commentId: string, questionId: string) => void
+  onUnacceptAnswer: (commentId: string, questionId: string) => void
+  parentComment?: CommentWithReplies // To know if this is a reply to a question
 }
 
 function CommentThread({
@@ -161,10 +179,17 @@ function CommentThread({
   collapsedThreads,
   toggleThread,
   onResolve,
+  onAcceptAnswer,
+  onUnacceptAnswer,
+  parentComment,
 }: CommentThreadProps) {
   const isCollapsed = collapsedThreads.has(comment.id)
   const hasReplies = comment.replies.length > 0
   const maxDepth = 3 // Limit nesting depth for readability
+
+  // Check if this is a reply to a question (for accept answer functionality)
+  const isReplyToQuestion = parentComment?.is_question === true
+  const isAcceptedAnswer = comment.accepted_answer === true
 
   return (
     <div className={depth > 0 ? "ml-4 sm:ml-6 border-l-2 border-border pl-4" : ""}>
@@ -218,7 +243,7 @@ function CommentThread({
           </div>
         </div>
 
-        {/* Question/Resolved badges */}
+        {/* Question/Resolved/Accepted badges */}
         <div className="flex items-center gap-2 mt-1">
           {comment.is_question && (
             <span className="inline-flex items-center gap-1 text-xs text-warning">
@@ -232,23 +257,55 @@ function CommentThread({
               Resolved
             </span>
           )}
+          {isAcceptedAnswer && (
+            <span className="inline-flex items-center gap-1 text-xs text-success bg-success/10 px-2 py-0.5 rounded-full">
+              <CheckCircle className="h-3 w-3" />
+              Accepted Answer
+            </span>
+          )}
         </div>
 
         {/* Comment content */}
         <p className="text-sm text-foreground whitespace-pre-wrap mt-2">
-          {comment.content}
+          {parseMentionsToText(comment.content)}
         </p>
 
-        {/* Reply button */}
-        {depth < maxDepth && (
-          <button
-            onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
-            className="mt-2 text-xs text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
-          >
-            <Reply className="h-3 w-3" />
-            Reply
-          </button>
-        )}
+        {/* Action buttons */}
+        <div className="flex items-center gap-3 mt-2">
+          {/* Reply button */}
+          {depth < maxDepth && (
+            <button
+              onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+              className="text-xs text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
+            >
+              <Reply className="h-3 w-3" />
+              Reply
+            </button>
+          )}
+
+          {/* Accept/Unaccept Answer button (only for replies to questions) */}
+          {isReplyToQuestion && parentComment && (
+            <>
+              {isAcceptedAnswer ? (
+                <button
+                  onClick={() => onUnacceptAnswer(comment.id, parentComment.id)}
+                  className="text-xs text-success hover:text-muted-foreground transition-colors inline-flex items-center gap-1"
+                >
+                  <CheckCircle className="h-3 w-3" />
+                  Unaccept
+                </button>
+              ) : (
+                <button
+                  onClick={() => onAcceptAnswer(comment.id, parentComment.id)}
+                  className="text-xs text-muted-foreground hover:text-success transition-colors inline-flex items-center gap-1"
+                >
+                  <CheckCircle className="h-3 w-3" />
+                  Accept Answer
+                </button>
+              )}
+            </>
+          )}
+        </div>
 
         {/* Reply form */}
         {replyingTo === comment.id && (
@@ -279,6 +336,9 @@ function CommentThread({
               collapsedThreads={collapsedThreads}
               toggleThread={toggleThread}
               onResolve={onResolve}
+              onAcceptAnswer={onAcceptAnswer}
+              onUnacceptAnswer={onUnacceptAnswer}
+              parentComment={comment}
             />
           ))}
         </div>
@@ -311,6 +371,7 @@ function CommentForm({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitSuccess, setSubmitSuccess] = useState(false)
+  const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([])
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -325,11 +386,14 @@ function CommentForm({
       setSubmitError(null)
       setSubmitSuccess(false)
 
-      const result = await createComment(storyId, newComment, isQuestion, parentCommentId)
+      // Extract mentioned user IDs from the comment text
+      const mentionedIds = extractMentionedUserIds(newComment)
+      const result = await createComment(storyId, newComment, isQuestion, parentCommentId, mentionedIds)
 
       if (result.success) {
         setNewComment("")
         setIsQuestion(false)
+        setMentionedUserIds([])
         setSubmitSuccess(true)
         onSuccess?.()
         setTimeout(() => setSubmitSuccess(false), 3000)
@@ -360,11 +424,11 @@ function CommentForm({
         </div>
       )}
 
-      <textarea
+      <MentionInput
         value={newComment}
-        onChange={(e) => setNewComment(e.target.value)}
+        onChange={setNewComment}
+        onMentionUsers={setMentionedUserIds}
         placeholder={placeholder}
-        className="w-full px-3 py-2 rounded-md border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none text-sm"
         rows={compact ? 2 : 3}
         disabled={isSubmitting}
         maxLength={5000}

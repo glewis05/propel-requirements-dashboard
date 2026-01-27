@@ -1,7 +1,7 @@
 # Requirements Dashboard - Development Status
 
 **Last Updated:** January 27, 2026
-**Session:** Phase 4 Complete - Approval Workflow
+**Session:** Phase 5 In Progress - Collaboration Features
 
 ---
 
@@ -400,13 +400,42 @@ Enable Realtime on tables in Dashboard > Database > Replication:
 **Database Migration:**
 - `supabase/migrations/003_notification_preferences.sql` - User notification settings
 
-### Phase 5: Collaboration Features
+### Phase 5: Collaboration Features ✅ COMPLETE (Jan 27, 2026)
 - [x] Comment submission with real-time updates ✅ (moved to Phase 3)
-- [ ] Comment threading (reply to comments)
-- [ ] @mentions with autocomplete
-- [ ] Activity feed
-- [ ] Developer Q&A workflow
-- [ ] In-app notification center
+- [x] Comment threading (reply to comments) ✅
+- [x] @mentions with autocomplete ✅
+- [x] Activity feed ✅
+- [x] Developer Q&A workflow ✅
+- [x] In-app notification center ✅
+
+**Components Created (Phase 5):**
+- `components/ui/mention-input.tsx` - @mentions autocomplete component
+- `components/activity/activity-feed.tsx` - Activity timeline with icons and links
+- `components/notifications/notification-bell.tsx` - Header notification dropdown
+- Updated `components/stories/comments-section.tsx` - Threaded comments with replies, accept answers
+- Updated `components/layout/header.tsx` - Added NotificationBell component
+- Updated `components/layout/sidebar.tsx` - Added Activity and Questions nav items
+- Updated `components/layout/mobile-nav.tsx` - Added Activity and Questions nav items
+
+**Pages Created (Phase 5):**
+- `app/(dashboard)/activity/page.tsx` - Activity feed page
+- `app/(dashboard)/activity/actions.ts` - Activity log server actions
+- `app/(dashboard)/questions/page.tsx` - Open questions queue
+- `app/(dashboard)/questions/actions.ts` - Q&A workflow actions (accept/unaccept answer)
+- `app/(dashboard)/notifications/actions.ts` - In-app notification CRUD
+
+**Database Migration:**
+- `supabase/migrations/004_activity_notifications.sql`:
+  - `activity_log` table - Centralized activity tracking
+  - `user_notifications` table - Per-user in-app notifications
+  - Added `accepted_answer`, `accepted_at`, `accepted_by` columns to `story_comments`
+  - Helper functions: `log_activity()`, `create_notification()`
+
+**Updated Services:**
+- `lib/notifications/service.ts` - Creates in-app notifications when sending mentions
+- Updated `lib/notifications/email.ts` - Mention notification email template
+- Updated `app/(dashboard)/stories/comment-actions.ts` - Accept mentioned user IDs
+- Updated `hooks/use-comments-subscription.ts` - Added Q&A fields to Comment interface
 
 ### Phase 6: Reporting & Traceability
 - [ ] Traceability matrix generation
@@ -703,12 +732,11 @@ USING (EXISTS (SELECT 1 FROM users WHERE auth_id = auth.uid() AND role = 'Admin'
 
 ## Next Steps When Resuming
 
-### Phase 5: Collaboration Features (Next)
-1. **Comment Threading** - Reply to comments, nested discussions
-2. **@mentions with Autocomplete** - Tag users in comments
-3. **Activity Feed** - Dashboard showing recent activity across stories
-4. **Developer Q&A Workflow** - Mark comments as questions, resolve answers
-5. **In-app Notification Center** - Bell icon with notification dropdown
+### Phase 6: Reporting & Traceability (Next)
+1. **Traceability Matrix Generation** - Show relationships between requirements, DIS items, and stories
+2. **Coverage Gap Analysis** - Identify requirements without stories or stories without requirements
+3. **PDF/Excel Export** - Generate downloadable reports
+4. **Scheduled Reports** - Automatic email reports on schedule
 
 ### Deferred Items
 - Rich text editor for acceptance criteria (Phase 3)

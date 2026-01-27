@@ -12,6 +12,8 @@ import {
   Settings,
   BarChart3,
   Bell,
+  Activity,
+  HelpCircle,
 } from "lucide-react"
 
 interface SidebarProps {
@@ -29,6 +31,18 @@ const navigation = [
     name: "User Stories",
     href: "/stories",
     icon: FileText,
+    roles: ["Portfolio Manager", "Program Manager", "Developer", "Admin"],
+  },
+  {
+    name: "Activity",
+    href: "/activity",
+    icon: Activity,
+    roles: ["Portfolio Manager", "Program Manager", "Developer", "Admin"],
+  },
+  {
+    name: "Questions",
+    href: "/questions",
+    icon: HelpCircle,
     roles: ["Portfolio Manager", "Program Manager", "Developer", "Admin"],
   },
   {

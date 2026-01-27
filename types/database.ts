@@ -22,6 +22,29 @@ export type ApprovalType = "internal_review" | "stakeholder" | "portfolio"
 
 export type ApprovalStatus = "approved" | "rejected" | "needs_discussion"
 
+export type ActivityType =
+  | "story_created"
+  | "story_updated"
+  | "story_deleted"
+  | "status_changed"
+  | "comment_added"
+  | "comment_resolved"
+  | "question_asked"
+  | "question_answered"
+  | "approval_granted"
+  | "approval_rejected"
+  | "story_linked"
+  | "story_unlinked"
+
+export type NotificationType =
+  | "mention"
+  | "reply"
+  | "status_change"
+  | "approval_needed"
+  | "approval_result"
+  | "question_answered"
+  | "assigned"
+
 export interface NotificationPreferences {
   email_enabled: boolean
   status_changes: boolean
@@ -208,6 +231,9 @@ export interface Database {
           content: string
           is_question: boolean
           resolved: boolean
+          accepted_answer: boolean
+          accepted_at: string | null
+          accepted_by: string | null
           created_at: string
           updated_at: string
         }
@@ -219,6 +245,9 @@ export interface Database {
           content: string
           is_question?: boolean
           resolved?: boolean
+          accepted_answer?: boolean
+          accepted_at?: string | null
+          accepted_by?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -230,6 +259,9 @@ export interface Database {
           content?: string
           is_question?: boolean
           resolved?: boolean
+          accepted_answer?: boolean
+          accepted_at?: string | null
+          accepted_by?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -342,6 +374,73 @@ export interface Database {
           updated_at?: string
         }
       }
+      activity_log: {
+        Row: {
+          id: string
+          activity_type: ActivityType
+          user_id: string
+          story_id: string | null
+          comment_id: string | null
+          metadata: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          activity_type: ActivityType
+          user_id: string
+          story_id?: string | null
+          comment_id?: string | null
+          metadata?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          activity_type?: ActivityType
+          user_id?: string
+          story_id?: string | null
+          comment_id?: string | null
+          metadata?: Json
+          created_at?: string
+        }
+      }
+      user_notifications: {
+        Row: {
+          id: string
+          user_id: string
+          title: string
+          message: string
+          notification_type: NotificationType
+          story_id: string | null
+          comment_id: string | null
+          is_read: boolean
+          read_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          title: string
+          message: string
+          notification_type: NotificationType
+          story_id?: string | null
+          comment_id?: string | null
+          is_read?: boolean
+          read_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          title?: string
+          message?: string
+          notification_type?: NotificationType
+          story_id?: string | null
+          comment_id?: string | null
+          is_read?: boolean
+          read_at?: string | null
+          created_at?: string
+        }
+      }
     }
     Functions: {
       get_user_role: {
@@ -371,6 +470,27 @@ export interface Database {
           locked_by_name: string
           locked_since: string
         }[]
+      }
+      log_activity: {
+        Args: {
+          p_activity_type: string
+          p_user_id: string
+          p_story_id?: string
+          p_comment_id?: string
+          p_metadata?: Json
+        }
+        Returns: string
+      }
+      create_notification: {
+        Args: {
+          p_user_id: string
+          p_title: string
+          p_message: string
+          p_notification_type: string
+          p_story_id?: string
+          p_comment_id?: string
+        }
+        Returns: string
       }
     }
   }

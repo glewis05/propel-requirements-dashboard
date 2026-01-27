@@ -14,6 +14,8 @@ import {
   BarChart3,
   Bell,
   X,
+  Activity,
+  HelpCircle,
 } from "lucide-react"
 
 interface MobileNavProps {
@@ -34,6 +36,18 @@ const navigation = [
     name: "User Stories",
     href: "/stories",
     icon: FileText,
+    roles: ["Portfolio Manager", "Program Manager", "Developer", "Admin"],
+  },
+  {
+    name: "Activity",
+    href: "/activity",
+    icon: Activity,
+    roles: ["Portfolio Manager", "Program Manager", "Developer", "Admin"],
+  },
+  {
+    name: "Questions",
+    href: "/questions",
+    icon: HelpCircle,
     roles: ["Portfolio Manager", "Program Manager", "Developer", "Admin"],
   },
   {

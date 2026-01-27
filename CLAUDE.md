@@ -126,12 +126,12 @@ Future requirement to support multiple clients (e.g., Providence, Kaiser):
 - Design database schema with client isolation in mind
 
 ## Current Phase
-Phase 5: Collaboration Features (Current)
-- [ ] Comment threading (reply to comments)
-- [ ] @mentions with autocomplete
-- [ ] Activity feed
-- [ ] Developer Q&A workflow
-- [ ] In-app notification center
+Phase 5: Collaboration Features ✅ COMPLETE (Jan 27, 2026)
+- [x] Comment threading (reply to comments) ✅
+- [x] @mentions with autocomplete ✅
+- [x] Activity feed ✅
+- [x] Developer Q&A workflow ✅
+- [x] In-app notification center ✅
 
 **Upcoming Phases:**
 - Phase 6: Reporting & Traceability
@@ -160,6 +160,13 @@ Phase 5: Collaboration Features (Current)
   - Email notifications via Resend (role-based, opt-in/opt-out)
   - Notification settings page (/settings/notifications)
   - Approval history timeline on story detail page
+- Phase 5 - Collaboration Features ✅ (Jan 27, 2026)
+  - Comment threading (replies up to 3 levels deep)
+  - @mentions with autocomplete and notifications
+  - Activity feed page (/activity)
+  - Questions page with Q&A workflow (/questions)
+  - Accept/unaccept answer functionality
+  - In-app notification center (bell icon dropdown)
 
 ## Story Relationships (Database Fields)
 - `parent_story_id` TEXT - References parent story for hierarchy (one level)
@@ -178,7 +185,7 @@ Phase 5: Collaboration Features (Current)
 - `components/stories/stories-list.tsx` - Client component with filtering, search, mobile card view, and virtual scrolling (50+ items)
 - `components/stories/stories-list-realtime.tsx` - Wrapper that adds real-time subscriptions to StoriesList
 - `components/stories/collapsible-section.tsx` - Reusable expand/collapse section with icon, badge support
-- `components/stories/comments-section.tsx` - Real-time comments with submission form
+- `components/stories/comments-section.tsx` - Threaded comments with @mentions, real-time updates, replies up to 3 levels deep
 - `components/stories/story-form.tsx` - Reusable form for create/edit with react-hook-form + Zod validation
 - `components/stories/story-actions.tsx` - Edit/Delete buttons with confirmation dialog
 - `components/stories/version-history.tsx` - Expandable version list with diff comparison
@@ -190,6 +197,12 @@ Phase 5: Collaboration Features (Current)
 ### Settings
 - `components/settings/notification-settings-form.tsx` - Email notification opt-in/opt-out toggles
 
+### Activity
+- `components/activity/activity-feed.tsx` - Activity timeline with icons and story links
+
+### Notifications
+- `components/notifications/notification-bell.tsx` - Header dropdown with unread count, mark as read
+
 ### Hooks (Real-time Subscriptions)
 - `hooks/use-realtime-subscription.ts` - Generic Supabase real-time subscription hook with cleanup
 - `hooks/use-stories-subscription.ts` - Stories list subscription (INSERT/UPDATE/DELETE)
@@ -197,6 +210,7 @@ Phase 5: Collaboration Features (Current)
 
 ### UI
 - `components/ui/skeleton.tsx` - Skeleton loaders (Skeleton, SkeletonText, SkeletonCard, SkeletonTableRow, SkeletonStoriesTable, SkeletonStatsGrid)
+- `components/ui/mention-input.tsx` - @mentions autocomplete textarea with user search
 - `components/ui/loading-spinner.tsx` - Loading spinner with sizes (sm, md, lg) and LoadingPage component
 
 ### Layout

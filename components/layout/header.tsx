@@ -6,8 +6,9 @@ import { createClient } from "@/lib/supabase/client"
 import type { User } from "@supabase/supabase-js"
 import type { Database } from "@/types/database"
 import Image from "next/image"
-import { Menu, LogOut, User as UserIcon, Bell } from "lucide-react"
+import { Menu, LogOut, User as UserIcon } from "lucide-react"
 import { MobileNav } from "./mobile-nav"
+import { NotificationBell } from "@/components/notifications/notification-bell"
 
 type UserProfile = Database["public"]["Tables"]["users"]["Row"]
 
@@ -70,15 +71,7 @@ export function Header({ user, profile }: HeaderProps) {
         {/* Right side items */}
         <div className="flex items-center gap-x-4 lg:gap-x-6">
           {/* Notifications */}
-          <button
-            type="button"
-            className="relative -m-2.5 p-2.5 text-muted-foreground hover:text-foreground"
-          >
-            <span className="sr-only">View notifications</span>
-            <Bell className="h-5 w-5" />
-            {/* Notification dot */}
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-destructive" />
-          </button>
+          <NotificationBell />
 
           {/* Separator */}
           <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-border" />
