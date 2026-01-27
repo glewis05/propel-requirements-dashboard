@@ -55,7 +55,7 @@ export default function LoginPage() {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-white">
-            Propel
+            Providence
           </h1>
           <p className="text-propel-gold mt-1 font-medium">
             Requirements Dashboard

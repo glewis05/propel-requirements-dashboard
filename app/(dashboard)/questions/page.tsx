@@ -11,7 +11,7 @@ import { getOpenQuestions } from "./actions"
 import { parseMentionsToText } from "@/components/ui/mention-input"
 
 export const metadata: Metadata = {
-  title: "Questions | Propel Requirements Dashboard",
+  title: "Questions | Providence Requirements Dashboard",
   description: "Open questions across all stories",
 }
 

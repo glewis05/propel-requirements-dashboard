@@ -344,7 +344,7 @@ export default async function StoryDetailPage({ params }: Props) {
           <CollapsibleSection
             title="Acceptance Criteria"
             icon={<CheckSquare className="h-5 w-5 text-success" />}
-            defaultOpen={true}
+            defaultOpen={false}
           >
             {story.acceptance_criteria ? (
               <div className="prose prose-sm max-w-none text-foreground">

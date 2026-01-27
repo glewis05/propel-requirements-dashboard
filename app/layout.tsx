@@ -2,8 +2,8 @@ import type { Metadata } from "next"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "Requirements Dashboard | Propel Health",
-  description: "Interactive requirements management and approval workflow for Propel Health programs",
+  title: "Requirements Dashboard | Providence",
+  description: "Interactive requirements management and approval workflow for Providence programs",
 }
 
 export default function RootLayout({

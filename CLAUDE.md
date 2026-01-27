@@ -126,15 +126,19 @@ Future requirement to support multiple clients (e.g., Providence, Kaiser):
 - Design database schema with client isolation in mind
 
 ## Current Phase
-Phase 5: Collaboration Features ✅ COMPLETE (Jan 27, 2026)
-- [x] Comment threading (reply to comments) ✅
-- [x] @mentions with autocomplete ✅
-- [x] Activity feed ✅
-- [x] Developer Q&A workflow ✅
-- [x] In-app notification center ✅
+Phase 6: Reporting & Traceability ✅ COMPLETE (Jan 27, 2026)
+- [x] Requirements table schema update ✅
+- [x] Requirement-story mapping table ✅
+- [x] Traceability matrix report page ✅
+- [x] Program summary report page ✅
+- [x] Coverage report page ✅
+- [x] Approval history report page ✅
+- [x] CSV export for all reports ✅
+- [ ] PDF export (deferred)
+- [ ] Excel export (deferred)
+- [ ] Scheduled reports (deferred)
 
 **Upcoming Phases:**
-- Phase 6: Reporting & Traceability
 - Phase 7: AI Features (Relationship Suggestions, Risk Advisor)
 - Phase 8: Polish & Launch
 
@@ -167,6 +171,15 @@ Phase 5: Collaboration Features ✅ COMPLETE (Jan 27, 2026)
   - Questions page with Q&A workflow (/questions)
   - Accept/unaccept answer functionality
   - In-app notification center (bell icon dropdown)
+- Phase 6 - Reporting & Traceability ✅ (Jan 27, 2026)
+  - Requirements table schema update (added id, status, category columns)
+  - Requirement-story mapping table for traceability
+  - Traceability matrix view (requirement → story mapping)
+  - Program summary report with status/priority breakdown
+  - Coverage reports (requirements and stories)
+  - Approval history audit trail report
+  - CSV export for all reports
+  - Database views: traceability_matrix, requirement_coverage_summary, story_coverage
 
 ## Story Relationships (Database Fields)
 - `parent_story_id` TEXT - References parent story for hierarchy (one level)
@@ -353,6 +366,10 @@ ALTER PUBLICATION supabase_realtime ADD TABLE story_comments;
 | "violates foreign key constraint story_versions_story_id_fkey" on story creation | Version trigger set to BEFORE INSERT instead of AFTER INSERT | Fix trigger: `DROP TRIGGER user_stories_version_trigger ON user_stories; CREATE TRIGGER user_stories_version_trigger AFTER INSERT OR UPDATE ON user_stories FOR EACH ROW EXECUTE FUNCTION create_story_version();` |
 | Story create/update/delete silently fails | Missing RLS policy for that operation | Add INSERT/UPDATE/DELETE policies to `user_stories` table (see RLS Policies section) |
 | Delete appears to succeed but story still exists | Missing DELETE RLS policy | Add DELETE policy for Admins on `user_stories` and related tables |
+| "column 'id' referenced in foreign key constraint does not exist" | Existing table missing the column referenced by new foreign key | Add the column with UNIQUE constraint before creating referencing table |
+| "no unique constraint matching given keys for referenced table" | Foreign key references column without PRIMARY KEY or UNIQUE constraint | Add `UNIQUE` constraint: `ALTER TABLE x ADD CONSTRAINT x_id_unique UNIQUE (id);` |
+| "cannot drop constraint X because other objects depend on it" | Trying to change primary key that other tables reference | Keep existing primary key, add UNIQUE constraint on new column instead |
+| Migration fails on index creation for missing column | `CREATE INDEX` on column that doesn't exist in legacy table | Use conditional index creation in DO block, or add columns first |
 
 ## Known Technical Debt
 

@@ -3,7 +3,7 @@ import { ActivityFeed } from "@/components/activity/activity-feed"
 import { getRecentActivities } from "./actions"
 
 export const metadata: Metadata = {
-  title: "Activity | Propel Requirements Dashboard",
+  title: "Activity | Providence Requirements Dashboard",
   description: "Recent activity across all stories",
 }
 

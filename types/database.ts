@@ -45,6 +45,26 @@ export type NotificationType =
   | "question_answered"
   | "assigned"
 
+export type RequirementCategory =
+  | "Functional"
+  | "Non-Functional"
+  | "System"
+  | "Interface"
+  | "Performance"
+  | "Security"
+  | "Compliance"
+  | "Usability"
+
+export type RequirementStatus =
+  | "Draft"
+  | "Under Review"
+  | "Approved"
+  | "Implemented"
+  | "Verified"
+  | "Deprecated"
+
+export type CoverageType = "full" | "partial" | "derived"
+
 export interface NotificationPreferences {
   email_enabled: boolean
   status_changes: boolean
@@ -439,6 +459,91 @@ export interface Database {
           is_read?: boolean
           read_at?: string | null
           created_at?: string
+        }
+      }
+      requirements: {
+        Row: {
+          id: string
+          requirement_id: string
+          dis_number: string | null
+          title: string
+          description: string | null
+          category: RequirementCategory | null
+          priority: string | null
+          source: string | null
+          program_id: string | null
+          status: RequirementStatus
+          regulatory_reference: string | null
+          is_critical: boolean
+          created_at: string
+          updated_at: string
+          approved_at: string | null
+          approved_by: string | null
+        }
+        Insert: {
+          id?: string
+          requirement_id: string
+          dis_number?: string | null
+          title: string
+          description?: string | null
+          category?: RequirementCategory | null
+          priority?: string | null
+          source?: string | null
+          program_id?: string | null
+          status?: RequirementStatus
+          regulatory_reference?: string | null
+          is_critical?: boolean
+          created_at?: string
+          updated_at?: string
+          approved_at?: string | null
+          approved_by?: string | null
+        }
+        Update: {
+          id?: string
+          requirement_id?: string
+          dis_number?: string | null
+          title?: string
+          description?: string | null
+          category?: RequirementCategory | null
+          priority?: string | null
+          source?: string | null
+          program_id?: string | null
+          status?: RequirementStatus
+          regulatory_reference?: string | null
+          is_critical?: boolean
+          created_at?: string
+          updated_at?: string
+          approved_at?: string | null
+          approved_by?: string | null
+        }
+      }
+      requirement_story_mapping: {
+        Row: {
+          id: string
+          requirement_id: string
+          story_id: string
+          coverage_type: CoverageType
+          coverage_notes: string | null
+          created_at: string
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          requirement_id: string
+          story_id: string
+          coverage_type?: CoverageType
+          coverage_notes?: string | null
+          created_at?: string
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          requirement_id?: string
+          story_id?: string
+          coverage_type?: CoverageType
+          coverage_notes?: string | null
+          created_at?: string
+          created_by?: string | null
         }
       }
     }

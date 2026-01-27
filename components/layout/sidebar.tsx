@@ -106,7 +106,7 @@ export function Sidebar({ userRole }: SidebarProps) {
               </svg>
             </div>
             <div>
-              <span className="text-lg font-bold text-white">Propel</span>
+              <span className="text-lg font-bold text-white">Providence</span>
               <p className="text-xs text-propel-gold">Requirements Dashboard</p>
             </div>
           </div>

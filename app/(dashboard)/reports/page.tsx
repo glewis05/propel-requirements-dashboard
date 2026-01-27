@@ -1,30 +1,37 @@
-import { FileText, Download, BarChart3, GitBranch } from "lucide-react"
+"use client"
+
+import { FileText, BarChart3, GitBranch, ClipboardList, ArrowRight } from "lucide-react"
+import Link from "next/link"
 
 export default function ReportsPage() {
   const reports = [
     {
-      name: "Traceability Matrix",
-      description: "Requirements to test cases mapping with coverage analysis",
-      icon: GitBranch,
+      name: "Program Summary",
+      description: "Overview of all stories by program with status and priority breakdown",
+      icon: BarChart3,
+      href: "/reports/program-summary",
       available: true,
     },
     {
-      name: "Program Summary",
-      description: "Overview of all stories by program with status breakdown",
-      icon: BarChart3,
+      name: "Traceability Matrix",
+      description: "Requirements to user stories mapping with coverage analysis",
+      icon: GitBranch,
+      href: "/reports/traceability",
+      available: true,
+    },
+    {
+      name: "Requirement Coverage",
+      description: "Coverage metrics showing which requirements have linked stories",
+      icon: ClipboardList,
+      href: "/reports/coverage",
       available: true,
     },
     {
       name: "Approval History",
       description: "Complete audit trail of all approvals and status changes",
       icon: FileText,
+      href: "/reports/approvals",
       available: true,
-    },
-    {
-      name: "Coverage Gap Analysis",
-      description: "Identify requirements without linked test cases",
-      icon: BarChart3,
-      available: false,
     },
   ]
 
@@ -34,7 +41,7 @@ export default function ReportsPage() {
       <div>
         <h1 className="text-2xl font-bold text-foreground">Reports</h1>
         <p className="text-muted-foreground mt-1">
-          Generate and export compliance reports
+          Generate and export compliance reports for traceability and auditing
         </p>
       </div>
 
@@ -60,15 +67,13 @@ export default function ReportsPage() {
                 </p>
                 <div className="flex items-center gap-3 mt-4">
                   {report.available ? (
-                    <>
-                      <button className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
-                        Generate
-                      </button>
-                      <button className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted transition-colors">
-                        <Download className="h-4 w-4" />
-                        Export PDF
-                      </button>
-                    </>
+                    <Link
+                      href={report.href}
+                      className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                    >
+                      View Report
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
                   ) : (
                     <span className="text-xs text-muted-foreground">
                       Coming soon
@@ -79,6 +84,14 @@ export default function ReportsPage() {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Info Note */}
+      <div className="rounded-lg bg-muted/50 border border-border p-4">
+        <p className="text-sm text-muted-foreground">
+          <strong>Note:</strong> Reports are generated in real-time from your current data.
+          Export options (PDF, Excel, CSV) are available on each report page.
+        </p>
       </div>
     </div>
   )

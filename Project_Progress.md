@@ -1,7 +1,7 @@
 # Requirements Dashboard - Development Status
 
 **Last Updated:** January 27, 2026
-**Session:** Phase 5 In Progress - Collaboration Features
+**Session:** Phase 6 Complete - Reporting & Traceability
 
 ---
 
@@ -437,11 +437,42 @@ Enable Realtime on tables in Dashboard > Database > Replication:
 - Updated `app/(dashboard)/stories/comment-actions.ts` - Accept mentioned user IDs
 - Updated `hooks/use-comments-subscription.ts` - Added Q&A fields to Comment interface
 
-### Phase 6: Reporting & Traceability
-- [ ] Traceability matrix generation
-- [ ] Coverage gap analysis
-- [ ] PDF/Excel export
-- [ ] Scheduled reports
+### Phase 6: Reporting & Traceability ✅ COMPLETE (Jan 27, 2026)
+- [x] Requirements table schema update ✅
+- [x] Requirement-story mapping table ✅
+- [x] Traceability matrix report page ✅
+- [x] Program summary report page ✅
+- [x] Coverage report page (requirements + stories) ✅
+- [x] Approval history report page ✅
+- [x] CSV export for all reports ✅
+- [ ] PDF export (deferred)
+- [ ] Excel export (deferred)
+- [ ] Scheduled reports (deferred)
+
+**Database Migrations (run in order):**
+- `supabase/migrations/005a_requirements_schema_update.sql`:
+  - Adds `id` UUID column with UNIQUE constraint to existing `requirements` table
+  - Adds missing columns: `dis_number`, `status`, `category`, `is_critical`, etc.
+- `supabase/migrations/005b_traceability_views.sql`:
+  - `requirement_story_mapping` table - Links requirements to stories
+  - Views: `traceability_matrix`, `requirement_coverage_summary`, `story_coverage`
+  - RLS policies for requirements tables
+  - Indexes on requirements and mapping tables
+
+**New Types Added:**
+- `RequirementCategory` - Functional, Non-Functional, System, etc.
+- `RequirementStatus` - Draft, Under Review, Approved, Implemented, Verified, Deprecated
+- `CoverageType` - full, partial, derived
+
+**Pages Created:**
+- `app/(dashboard)/reports/page.tsx` - Updated with links to all reports
+- `app/(dashboard)/reports/program-summary/page.tsx` - Story counts by program/status
+- `app/(dashboard)/reports/traceability/page.tsx` - Requirement-to-story mapping
+- `app/(dashboard)/reports/coverage/page.tsx` - Coverage metrics (requirements + stories)
+- `app/(dashboard)/reports/approvals/page.tsx` - Approval history audit trail
+
+**Server Actions:**
+- `app/(dashboard)/reports/actions.ts` - Report data fetching functions
 
 ### Phase 7: AI Features
 **AI Relationship Suggestions**
@@ -728,21 +759,63 @@ FOR DELETE TO authenticated
 USING (EXISTS (SELECT 1 FROM users WHERE auth_id = auth.uid() AND role = 'Admin'));
 ```
 
+### Session: January 27, 2026 (Phase 6 Migrations)
+
+**16. Existing Tables May Have Different Schema**
+When writing migrations for tables that already exist in the database, the existing schema may differ from what you expect. Use `CREATE TABLE IF NOT EXISTS` cautiously - it won't modify existing tables. Instead:
+- First query `information_schema.columns` to see what columns exist
+- Use `ALTER TABLE ADD COLUMN IF NOT EXISTS` for adding columns
+- Split migrations into schema updates (005a) and dependent objects (005b)
+
+**17. Foreign Keys Require UNIQUE or PRIMARY KEY Constraints**
+When creating a foreign key reference like `REFERENCES requirements(id)`, the target column must have either:
+- A PRIMARY KEY constraint, OR
+- A UNIQUE constraint
+
+If the table already has a primary key on a different column and other tables depend on it, add a UNIQUE constraint instead:
+```sql
+ALTER TABLE requirements ADD CONSTRAINT requirements_id_unique UNIQUE (id);
+```
+
+**18. Can't Drop Primary Key with Dependent Foreign Keys**
+If other tables have foreign keys referencing a table's primary key, you cannot drop that primary key. Options:
+- Use `DROP ... CASCADE` (dangerous - drops all dependent constraints)
+- Keep existing primary key, add UNIQUE constraint on new column (safer)
+- Plan migrations to avoid this situation
+
+**19. Create Indexes Conditionally for Legacy Tables**
+When adding indexes to tables with potentially missing columns, wrap in DO block:
+```sql
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'x' AND column_name = 'y') THEN
+    CREATE INDEX IF NOT EXISTS idx_x_y ON x(y);
+  END IF;
+END $$;
+```
+
+**20. Split Complex Migrations**
+For complex schema changes on existing tables:
+1. **005a** - Fix/update existing table structure (add columns, constraints)
+2. **005b** - Create dependent objects (new tables referencing updated table, views, policies)
+
+This allows you to verify step 1 succeeded before running step 2.
+
 ---
 
 ## Next Steps When Resuming
 
-### Phase 6: Reporting & Traceability (Next)
-1. **Traceability Matrix Generation** - Show relationships between requirements, DIS items, and stories
-2. **Coverage Gap Analysis** - Identify requirements without stories or stories without requirements
-3. **PDF/Excel Export** - Generate downloadable reports
-4. **Scheduled Reports** - Automatic email reports on schedule
+### Phase 7: AI Features (Next)
+1. **AI Relationship Suggestions** - Analyze new stories for similarities, suggest links
+2. **AI Risk Advisor** - See `docs/AI_Risk_Advisor_Design.md` for full design
 
 ### Deferred Items
 - Rich text editor for acceptance criteria (Phase 3)
 - Baselining capability for releases (Phase 3)
 - Story templates (Phase 3)
 - Bulk approval functionality (Phase 4)
+- PDF/Excel export for reports (Phase 6)
+- Scheduled reports (Phase 6)
 
 ---
 
