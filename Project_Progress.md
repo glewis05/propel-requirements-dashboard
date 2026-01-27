@@ -378,13 +378,7 @@ Enable Realtime on tables in Dashboard > Database > Replication:
 **Database Migration:**
 - `supabase/migrations/002_story_relationships.sql` - Added relationship fields
 
-**AI Relationship Suggestions (Deferred)**
-- [ ] AI analyzes new stories for similarities
-- [ ] Suggests: "Similar to [X] - link them?"
-- [ ] Suggests: "Child of [Y] - nest it?"
-- [ ] Accept/reject/dismiss UI
-- [ ] Confidence scores displayed
-- [ ] API endpoint: POST /api/ai/suggest-relationships
+**AI Relationship Suggestions** - Moved to Phase 5 (AI Features)
 
 ### Phase 4: Approval Workflow
 - [ ] Status transition component with validation
@@ -393,7 +387,24 @@ Enable Realtime on tables in Dashboard > Database > Replication:
 - [ ] Bulk approval functionality
 - [ ] Approval history timeline
 
-### Phase 5: Collaboration Features
+### Phase 5: AI Features
+**AI Relationship Suggestions**
+- [ ] AI analyzes new stories for similarities
+- [ ] Suggests: "Similar to [X] - link them?"
+- [ ] Suggests: "Child of [Y] - nest it?"
+- [ ] Accept/reject/dismiss UI
+- [ ] Confidence scores displayed
+- [ ] API endpoint: POST /api/ai/suggest-relationships
+
+**AI Risk Advisor** (Full design in `docs/AI_Risk_Advisor_Design.md`)
+- [ ] Goals Management - Define program goals for alignment tracking
+- [ ] AI-Powered Risk Analysis - Claude API analyzes stories
+- [ ] Risk Scoring Matrix - Likelihood × Impact (1-25 scale)
+- [ ] Conversational Interface - Ask follow-up questions
+- [ ] Goal Alignment Detection - How stories support/conflict with goals
+- [ ] Risk Dashboard - Portfolio-level risk visualization
+
+### Phase 6: Collaboration Features
 - [x] Comment submission with real-time updates ✅ (moved to Phase 3)
 - [ ] Comment threading (reply to comments)
 - [ ] @mentions with autocomplete
@@ -401,13 +412,13 @@ Enable Realtime on tables in Dashboard > Database > Replication:
 - [ ] Developer Q&A workflow
 - [ ] In-app notification center
 
-### Phase 6: Reporting & Traceability
+### Phase 7: Reporting & Traceability
 - [ ] Traceability matrix generation
 - [ ] Coverage gap analysis
 - [ ] PDF/Excel export
 - [ ] Scheduled reports
 
-### Phase 7: Polish & Launch
+### Phase 8: Polish & Launch
 - [ ] Comprehensive testing
 - [ ] Performance optimization
 - [ ] Security audit
@@ -690,7 +701,6 @@ USING (EXISTS (SELECT 1 FROM users WHERE auth_id = auth.uid() AND role = 'Admin'
 - Rich text editor for acceptance criteria (Phase 3)
 - Baselining capability for releases (Phase 3)
 - Story templates (Phase 3)
-- AI relationship suggestions (Phase 3.5)
 
 ---
 

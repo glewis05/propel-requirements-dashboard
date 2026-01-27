@@ -133,6 +133,12 @@ Phase 4: Approval Workflow (Current)
 - [ ] Bulk approval functionality
 - [ ] Approval history timeline
 
+**Upcoming Phases:**
+- Phase 5: AI Features (Relationship Suggestions, Risk Advisor)
+- Phase 6: Collaboration Features (Threading, @mentions, Activity Feed)
+- Phase 7: Reporting & Traceability
+- Phase 8: Polish & Launch
+
 **Completed:**
 - Phase 1 - Foundation & Authentication ✅
 - Phase 2 - Core Dashboard & Data Display ✅ (Jan 26, 2026)
@@ -149,7 +155,6 @@ Phase 4: Approval Workflow (Current)
   - Parent-child hierarchy (one level deep)
   - Visual relationship display on story detail page
   - Database migration for story relationships
-  - AI relationship suggestions (deferred to future)
 
 ## Story Relationships (Database Fields)
 - `parent_story_id` TEXT - References parent story for hierarchy (one level)
