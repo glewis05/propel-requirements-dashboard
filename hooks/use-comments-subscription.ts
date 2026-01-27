@@ -6,11 +6,14 @@ import { useRealtimeSubscription } from "./use-realtime-subscription"
 export interface Comment {
   id: string
   story_id: string
-  user_id: string | null
+  user_id: string
+  parent_comment_id: string | null
   content: string
-  is_internal: boolean
+  is_question: boolean
+  resolved: boolean
   created_at: string
   updated_at: string
+  user_name?: string
 }
 
 export function useCommentsSubscription(

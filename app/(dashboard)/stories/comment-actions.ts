@@ -3,7 +3,12 @@
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 
-export async function createComment(storyId: string, content: string, isQuestion: boolean = false) {
+export async function createComment(
+  storyId: string,
+  content: string,
+  isQuestion: boolean = false,
+  parentCommentId?: string
+) {
   const supabase = await createClient()
 
   // Get current user
@@ -15,7 +20,7 @@ export async function createComment(storyId: string, content: string, isQuestion
   // Get user's internal ID from users table
   const { data: userData, error: userError } = await supabase
     .from("users")
-    .select("user_id")
+    .select("user_id, name")
     .eq("auth_id", user.id)
     .single()
 
@@ -40,6 +45,7 @@ export async function createComment(storyId: string, content: string, isQuestion
       user_id: userData.user_id,
       content: content.trim(),
       is_question: isQuestion,
+      parent_comment_id: parentCommentId || null,
     })
     .select()
     .single()
@@ -50,7 +56,7 @@ export async function createComment(storyId: string, content: string, isQuestion
   }
 
   revalidatePath(`/stories/${storyId}`)
-  return { success: true, comment }
+  return { success: true, comment, userName: userData.name }
 }
 
 export async function resolveComment(commentId: string, resolved: boolean) {

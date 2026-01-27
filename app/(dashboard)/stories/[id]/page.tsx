@@ -71,10 +71,11 @@ export default async function StoryDetailPage({ params }: Props) {
     .eq("story_id", id)
     .order("approved_at", { ascending: false })
 
-  // Fetch user names for approvals and versions
+  // Fetch user names for approvals, versions, and comments
   const userIds = new Set<string>()
   approvals?.forEach(a => userIds.add(a.approved_by))
   versions?.forEach(v => userIds.add(v.changed_by))
+  comments?.forEach(c => userIds.add(c.user_id))
 
   const { data: userNames } = await supabase
     .from("users")
@@ -98,6 +99,11 @@ export default async function StoryDetailPage({ params }: Props) {
   const versionsWithNames = (versions || []).map(v => ({
     ...v,
     changer_name: userNameMap.get(v.changed_by) || "Unknown",
+  }))
+
+  const commentsWithNames = (comments || []).map(c => ({
+    ...c,
+    user_name: userNameMap.get(c.user_id) || "Unknown",
   }))
 
   // Get current user role for permissions
@@ -416,7 +422,7 @@ export default async function StoryDetailPage({ params }: Props) {
           {/* Comments with Real-time Updates */}
           <CommentsSection
             storyId={id}
-            initialComments={comments || []}
+            initialComments={commentsWithNames}
           />
         </div>
 
