@@ -17,6 +17,8 @@ import { CommentsSection } from "@/components/stories/comments-section"
 import { StoryActions } from "@/components/stories/story-actions"
 import { VersionHistory } from "@/components/stories/version-history"
 import { StoryRelationshipsDisplay } from "@/components/stories/story-relationships-display"
+import { StatusTransitionWrapper } from "@/components/stories/status-transition-wrapper"
+import type { StoryStatus, UserRole } from "@/types/database"
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'
@@ -61,16 +63,18 @@ export default async function StoryDetailPage({ params }: Props) {
     .eq("story_id", id)
     .order("version_number", { ascending: false })
 
-  // Get current user role to determine if they can delete
+  // Get current user role for permissions
   const { data: { user } } = await supabase.auth.getUser()
   let canDelete = false
+  let userRole: UserRole | null = null
   if (user) {
     const { data: userData } = await supabase
       .from("users")
       .select("role")
       .eq("auth_id", user.id)
       .single()
-    canDelete = userData?.role === "Admin"
+    userRole = userData?.role as UserRole | null
+    canDelete = userRole === "Admin"
   }
 
   // Fetch parent story if exists
@@ -161,22 +165,6 @@ export default async function StoryDetailPage({ params }: Props) {
   }
   const relatedStories = Array.from(relatedStoriesMap.values())
 
-  // Helper function for status badge colors
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Approved":
-        return "bg-success/10 text-success border-success/20"
-      case "Pending Client Review":
-        return "bg-warning/10 text-warning border-warning/20"
-      case "Needs Discussion":
-        return "bg-destructive/10 text-destructive border-destructive/20"
-      case "Internal Review":
-        return "bg-primary/10 text-primary border-primary/20"
-      default:
-        return "bg-muted text-muted-foreground border-border"
-    }
-  }
-
   // Helper function for priority badge colors
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -212,13 +200,11 @@ export default async function StoryDetailPage({ params }: Props) {
               <span className="text-sm font-mono bg-muted px-2 py-1 rounded text-muted-foreground">
                 {story.story_id}
               </span>
-              <span
-                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border ${getStatusColor(
-                  story.status
-                )}`}
-              >
-                {story.status}
-              </span>
+              <StatusTransitionWrapper
+                storyId={story.story_id}
+                currentStatus={story.status as StoryStatus}
+                userRole={userRole}
+              />
               {story.priority && (
                 <span
                   className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border ${getPriorityColor(

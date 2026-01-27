@@ -3,6 +3,8 @@
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import type { StoryFormData } from "@/lib/validations/story"
+import type { StoryStatus, ApprovalType, ApprovalStatus } from "@/types/database"
+import { canTransition, STATUS_CONFIG } from "@/lib/status-transitions"
 
 function generateStoryId(programId: string): string {
   // Generate a unique story ID: PROG-YYYYMMDD-XXXX
@@ -273,4 +275,134 @@ export async function checkStoryLock(storyId: string) {
   }
 
   return { isLocked: false, lockedByName: null, lockedSince: null }
+}
+
+export async function transitionStoryStatus(
+  storyId: string,
+  newStatus: StoryStatus,
+  notes?: string
+) {
+  const supabase = await createClient()
+
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { success: false, error: "Not authenticated" }
+  }
+
+  // Get user details including role
+  const { data: userData } = await supabase
+    .from("users")
+    .select("user_id, role")
+    .eq("auth_id", user.id)
+    .single()
+
+  if (!userData) {
+    return { success: false, error: "User not found" }
+  }
+
+  // Fetch current story
+  const { data: story, error: fetchError } = await supabase
+    .from("user_stories")
+    .select("status, version, stakeholder_approved_at")
+    .eq("story_id", storyId)
+    .single()
+
+  if (fetchError || !story) {
+    return { success: false, error: "Story not found" }
+  }
+
+  const currentStatus = story.status as StoryStatus
+
+  // Validate transition is allowed
+  if (!canTransition(currentStatus, newStatus, userData.role)) {
+    return { success: false, error: "This status transition is not allowed" }
+  }
+
+  // Get transition config to check if it requires approval
+  const statusConfig = STATUS_CONFIG[currentStatus]
+  const transition = statusConfig?.allowedTransitions.find(t => t.to === newStatus)
+
+  // Prepare update data
+  const updateData: Record<string, unknown> = {
+    status: newStatus,
+    updated_at: new Date().toISOString(),
+    version: story.version + 1,
+  }
+
+  // Set status-specific date fields
+  const now = new Date().toISOString()
+  if (newStatus === "Draft") {
+    updateData.draft_date = now
+  } else if (newStatus === "Internal Review") {
+    updateData.internal_review_date = now
+  } else if (newStatus === "Pending Client Review") {
+    updateData.client_review_date = now
+  } else if (newStatus === "Needs Discussion") {
+    updateData.needs_discussion_date = now
+  } else if (newStatus === "Approved") {
+    updateData.approved_at = now
+    updateData.approved_by = userData.user_id
+  }
+
+  // If this is a stakeholder approval, set stakeholder fields
+  if (transition?.approvalType === "stakeholder") {
+    updateData.stakeholder_approved_at = now
+    updateData.stakeholder_approved_by = userData.user_id
+  }
+
+  // Update the story
+  const { error: updateError } = await supabase
+    .from("user_stories")
+    .update(updateData)
+    .eq("story_id", storyId)
+
+  if (updateError) {
+    console.error("Error updating story status:", updateError)
+    return { success: false, error: updateError.message }
+  }
+
+  // If this transition requires approval, create an approval record
+  if (transition?.requiresApproval && transition.approvalType) {
+    const approvalStatus: ApprovalStatus = "approved"
+
+    const { error: approvalError } = await supabase
+      .from("story_approvals")
+      .insert({
+        story_id: storyId,
+        approved_by: userData.user_id,
+        approval_type: transition.approvalType as ApprovalType,
+        status: approvalStatus,
+        previous_status: currentStatus,
+        notes: notes || null,
+      })
+
+    if (approvalError) {
+      console.error("Error creating approval record:", approvalError)
+      // Don't fail the whole operation, just log the error
+    }
+  }
+
+  // Always create a version record for status changes with notes
+  if (notes) {
+    await supabase
+      .from("story_versions")
+      .insert({
+        story_id: storyId,
+        version_number: story.version + 1,
+        snapshot: { ...story, status: newStatus },
+        change_summary: `Status changed from ${currentStatus} to ${newStatus}: ${notes}`,
+        changed_by: user.id,
+        changed_fields: ["status"],
+      })
+      .then(() => {})
+      .catch((err) => console.error("Version creation failed:", err))
+  }
+
+  revalidatePath("/stories")
+  revalidatePath(`/stories/${storyId}`)
+  revalidatePath("/approvals")
+  revalidatePath("/dashboard")
+
+  return { success: true }
 }
