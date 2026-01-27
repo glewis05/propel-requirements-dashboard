@@ -35,64 +35,69 @@ export default async function ApprovalsPage() {
           pendingStories.map((story) => (
             <div
               key={story.story_id}
-              className="rounded-lg bg-card shadow-sm border border-border p-6"
+              className="rounded-lg bg-card shadow-sm border border-border p-4 sm:p-6"
             >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-mono text-muted-foreground">
-                      {story.story_id}
-                    </span>
+              <div className="space-y-3">
+                {/* ID and Badges */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-mono text-muted-foreground">
+                    {story.story_id}
+                  </span>
+                  <span
+                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                      story.status === "Pending Client Review"
+                        ? "bg-warning/10 text-warning"
+                        : "bg-primary/10 text-primary"
+                    }`}
+                  >
+                    {story.status}
+                  </span>
+                  {story.priority && (
                     <span
-                      className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                        story.status === "Pending Client Review"
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                        story.priority === "Must Have"
+                          ? "bg-destructive/10 text-destructive"
+                          : story.priority === "Should Have"
                           ? "bg-warning/10 text-warning"
-                          : "bg-primary/10 text-primary"
+                          : "bg-muted text-muted-foreground"
                       }`}
                     >
-                      {story.status}
+                      {story.priority}
                     </span>
-                    {story.priority && (
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                          story.priority === "Must Have"
-                            ? "bg-destructive/10 text-destructive"
-                            : story.priority === "Should Have"
-                            ? "bg-warning/10 text-warning"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {story.priority}
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="text-lg font-semibold text-foreground mt-2">
-                    {story.title}
-                  </h3>
-                  {story.user_story && (
-                    <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                      {story.user_story}
-                    </p>
                   )}
-                  <p className="text-xs text-muted-foreground mt-3">
-                    Program: {story.program_id}
-                  </p>
                 </div>
+
+                {/* Title */}
+                <h3 className="text-base sm:text-lg font-semibold text-foreground">
+                  {story.title}
+                </h3>
+
+                {/* User Story Preview */}
+                {story.user_story && (
+                  <p className="text-sm text-muted-foreground line-clamp-2">
+                    {story.user_story}
+                  </p>
+                )}
+
+                {/* Program */}
+                <p className="text-xs text-muted-foreground">
+                  Program: {story.program_id}
+                </p>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center gap-3 mt-6 pt-4 border-t border-border">
-                <button className="inline-flex items-center gap-2 rounded-md bg-success px-4 py-2 text-sm font-medium text-success-foreground hover:bg-success/90 transition-colors">
+              {/* Action Buttons - stack on mobile */}
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-4 sm:mt-6 pt-4 border-t border-border">
+                <button className="inline-flex items-center justify-center gap-2 rounded-md bg-success px-4 py-2 text-sm font-medium text-success-foreground hover:bg-success/90 transition-colors">
                   <CheckCircle className="h-4 w-4" />
                   Approve
                 </button>
-                <button className="inline-flex items-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 transition-colors">
+                <button className="inline-flex items-center justify-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 transition-colors">
                   <XCircle className="h-4 w-4" />
                   Reject
                 </button>
-                <button className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors">
+                <button className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors">
                   <MessageSquare className="h-4 w-4" />
-                  Request Discussion
+                  <span className="sm:inline">Request Discussion</span>
                 </button>
               </div>
             </div>

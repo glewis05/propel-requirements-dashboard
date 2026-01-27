@@ -3,8 +3,6 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import {
   ArrowLeft,
-  Edit,
-  Clock,
   MessageSquare,
   FileText,
   CheckSquare,
@@ -16,6 +14,9 @@ import {
 } from "lucide-react"
 import { CollapsibleSection } from "@/components/stories/collapsible-section"
 import { CommentsSection } from "@/components/stories/comments-section"
+import { StoryActions } from "@/components/stories/story-actions"
+import { VersionHistory } from "@/components/stories/version-history"
+import { StoryRelationshipsDisplay } from "@/components/stories/story-relationships-display"
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'
@@ -53,13 +54,112 @@ export default async function StoryDetailPage({ params }: Props) {
     .eq("story_id", id)
     .order("created_at", { ascending: true })
 
-  // Fetch version history
+  // Fetch version history (all versions for diff comparison)
   const { data: versions } = await supabase
     .from("story_versions")
     .select("*")
     .eq("story_id", id)
     .order("version_number", { ascending: false })
-    .limit(5)
+
+  // Get current user role to determine if they can delete
+  const { data: { user } } = await supabase.auth.getUser()
+  let canDelete = false
+  if (user) {
+    const { data: userData } = await supabase
+      .from("users")
+      .select("role")
+      .eq("auth_id", user.id)
+      .single()
+    canDelete = userData?.role === "Admin"
+  }
+
+  // Fetch parent story if exists
+  let parentStory = null
+  if (story.parent_story_id) {
+    const { data: parentData } = await supabase
+      .from("user_stories")
+      .select("story_id, title, status, program_id")
+      .eq("story_id", story.parent_story_id)
+      .single()
+
+    if (parentData) {
+      parentStory = {
+        ...parentData,
+        program_name: program?.name || undefined,
+      }
+    }
+  }
+
+  // Fetch child stories (stories that have this story as parent)
+  const { data: childrenData } = await supabase
+    .from("user_stories")
+    .select("story_id, title, status, program_id")
+    .eq("parent_story_id", id)
+    .order("title")
+
+  const childStories = (childrenData || []).map(s => ({
+    ...s,
+    program_name: program?.name || undefined,
+  }))
+
+  // Fetch related stories (from this story's related_stories array)
+  const relatedStoryIds = (story.related_stories as string[]) || []
+  let outgoingRelated: Array<{ story_id: string; title: string; status: string; program_id: string; program_name?: string }> = []
+
+  if (relatedStoryIds.length > 0) {
+    const { data: outgoingData } = await supabase
+      .from("user_stories")
+      .select("story_id, title, status, program_id")
+      .in("story_id", relatedStoryIds)
+
+    // Fetch program names for related stories
+    const programIds = Array.from(new Set((outgoingData || []).map((s: { program_id: string }) => s.program_id)))
+    const { data: programsData } = await supabase
+      .from("programs")
+      .select("program_id, name")
+      .in("program_id", programIds)
+
+    const programNameMap = new Map((programsData || []).map(p => [p.program_id, p.name]))
+
+    outgoingRelated = (outgoingData || []).map(s => ({
+      ...s,
+      program_name: programNameMap.get(s.program_id) || undefined,
+    }))
+  }
+
+  // Fetch stories that link TO this story (bidirectional relationship)
+  const { data: incomingData } = await supabase.rpc("get_stories_linking_to", {
+    p_story_id: id,
+  })
+
+  let incomingRelated: Array<{ story_id: string; title: string; status: string; program_id: string; program_name?: string }> = []
+  if (incomingData && incomingData.length > 0) {
+    // Fetch program names for incoming related stories
+    const incomingProgramIds = Array.from(new Set(incomingData.map((s: { program_id: string }) => s.program_id)))
+    const { data: incomingProgramsData } = await supabase
+      .from("programs")
+      .select("program_id, name")
+      .in("program_id", incomingProgramIds)
+
+    const incomingProgramMap = new Map((incomingProgramsData || []).map(p => [p.program_id, p.name]))
+
+    incomingRelated = incomingData.map((s: { story_id: string; title: string; status: string; program_id: string }) => ({
+      ...s,
+      program_name: incomingProgramMap.get(s.program_id) || undefined,
+    }))
+  }
+
+  // Merge and dedupe related stories (bidirectional)
+  const relatedStoriesMap = new Map<string, { story_id: string; title: string; status: string; program_id: string; program_name?: string }>()
+  for (const s of outgoingRelated) {
+    relatedStoriesMap.set(s.story_id, s)
+  }
+  for (const s of incomingRelated) {
+    if (!relatedStoriesMap.has(s.story_id)) {
+      relatedStoriesMap.set(s.story_id, s)
+    }
+  }
+  const relatedStories = Array.from(relatedStoriesMap.values())
 
   // Helper function for status badge colors
   const getStatusColor = (status: string) => {
@@ -103,16 +203,17 @@ export default async function StoryDetailPage({ params }: Props) {
       </Link>
 
       {/* Story Header */}
-      <div className="rounded-lg bg-card shadow-sm border border-border p-6">
-        <div className="flex items-start justify-between">
-          <div className="space-y-3">
+      <div className="rounded-lg bg-card shadow-sm border border-border p-4 sm:p-6">
+        <div className="space-y-4">
+          {/* Top row: ID, Badges, and Edit button */}
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             {/* ID and Badges */}
-            <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="text-sm font-mono bg-muted px-2 py-1 rounded text-muted-foreground">
                 {story.story_id}
               </span>
               <span
-                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border ${getStatusColor(
+                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border ${getStatusColor(
                   story.status
                 )}`}
               >
@@ -120,7 +221,7 @@ export default async function StoryDetailPage({ params }: Props) {
               </span>
               {story.priority && (
                 <span
-                  className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border ${getPriorityColor(
+                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border ${getPriorityColor(
                     story.priority
                   )}`}
                 >
@@ -128,43 +229,43 @@ export default async function StoryDetailPage({ params }: Props) {
                 </span>
               )}
               {story.is_technical && (
-                <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-secondary/10 text-secondary border border-secondary/20">
+                <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-secondary/10 text-secondary border border-secondary/20">
                   Technical
                 </span>
               )}
             </div>
 
-            {/* Title */}
-            <h1 className="text-2xl font-bold text-foreground">
-              {story.title}
-            </h1>
-
-            {/* Meta info */}
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Layers className="h-4 w-4" />
-                {program?.name || story.program_id}
-              </span>
-              {story.roadmap_target && (
-                <span className="flex items-center gap-1">
-                  <Target className="h-4 w-4" />
-                  {story.roadmap_target}
-                </span>
-              )}
-              <span className="flex items-center gap-1">
-                <Calendar className="h-4 w-4" />
-                Updated {new Date(story.updated_at).toLocaleDateString()}
-              </span>
-            </div>
+            {/* Story Actions - Edit and Delete */}
+            <StoryActions
+              storyId={id}
+              storyTitle={story.title}
+              canDelete={canDelete}
+            />
           </div>
 
-          <Link
-            href={`/stories/${id}/edit`}
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
-            <Edit className="h-4 w-4" />
-            Edit Story
-          </Link>
+          {/* Title */}
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+            {story.title}
+          </h1>
+
+          {/* Meta info - stacks on mobile */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Layers className="h-4 w-4" />
+              {program?.name || story.program_id}
+            </span>
+            {story.roadmap_target && (
+              <span className="flex items-center gap-1">
+                <Target className="h-4 w-4" />
+                {story.roadmap_target}
+              </span>
+            )}
+            <span className="flex items-center gap-1">
+              <Calendar className="h-4 w-4" />
+              <span className="hidden sm:inline">Updated </span>
+              {new Date(story.updated_at).toLocaleDateString()}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -281,6 +382,14 @@ export default async function StoryDetailPage({ params }: Props) {
             </CollapsibleSection>
           )}
 
+          {/* Story Relationships */}
+          <StoryRelationshipsDisplay
+            parentStory={parentStory}
+            childStories={childStories}
+            relatedStories={relatedStories}
+            currentProgramId={story.program_id}
+          />
+
           {/* Comments with Real-time Updates */}
           <CommentsSection
             storyId={id}
@@ -381,39 +490,11 @@ export default async function StoryDetailPage({ params }: Props) {
             </div>
           )}
 
-          {/* Version History */}
-          <div className="rounded-lg bg-card shadow-sm border border-border p-6">
-            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Version History
-            </h2>
-            {versions && versions.length > 0 ? (
-              <ul className="space-y-3">
-                {versions.map((version) => (
-                  <li
-                    key={version.id}
-                    className="text-sm border-l-2 border-muted pl-3 py-1"
-                  >
-                    <p className="font-medium text-foreground">
-                      v{version.version_number}
-                    </p>
-                    {version.change_summary && (
-                      <p className="text-muted-foreground text-xs mt-0.5">
-                        {version.change_summary}
-                      </p>
-                    )}
-                    <p className="text-muted-foreground text-xs mt-1">
-                      {new Date(version.changed_at).toLocaleString()}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                No version history available.
-              </p>
-            )}
-          </div>
+          {/* Version History with Diff Viewer */}
+          <VersionHistory
+            versions={versions || []}
+            currentVersion={story.version}
+          />
         </div>
       </div>
     </div>

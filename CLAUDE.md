@@ -21,7 +21,7 @@ npm run lint     # Run ESLint
 - **Framework:** Next.js 14 with App Router
 - **Database:** Supabase (PostgreSQL) with Row Level Security
 - **Auth:** Supabase Auth with magic link (passwordless)
-- **Styling:** Tailwind CSS with Providence branding (teal primary #0F766E, navy secondary #1E3A5F)
+- **Styling:** Tailwind CSS with Propel Health branding (teal #0C8181, gold #F9BC15, navy #34353F, Montserrat font)
 - **Icons:** Lucide React
 
 ### Supabase Client Usage
@@ -70,9 +70,20 @@ Four roles with hierarchical permissions:
 - `release_story_lock(p_story_id)` - Release edit lock
 - `is_story_locked(p_story_id)` - Check if another user holds lock
 - `get_user_role()` / `get_user_programs()` - Used by RLS policies
+- `create_story_version()` - Called by trigger to create version records
+
+### Database Triggers
+- `trigger_user_stories_updated_at` - BEFORE UPDATE: Sets `updated_at` timestamp
+- `user_stories_version_trigger` - **AFTER** INSERT OR UPDATE: Creates version record in `story_versions`
+
+**IMPORTANT:** The version trigger MUST be AFTER INSERT/UPDATE, not BEFORE. If set to BEFORE, it will fail with foreign key errors because the story doesn't exist yet.
 
 ### Story Status Workflow
-`Draft` → `Internal Review` → `Pending Client Review` → `Approved` (or `Needs Discussion` / `Out of Scope`)
+`Draft` → `Internal Review` → `Pending Client Review` → `Approved` → `In Development` → `In UAT`
+
+Special statuses: `Needs Discussion`, `Out of Scope`
+
+**Protected Statuses:** Stories with client approval (`stakeholder_approved_at` set) in `Approved`, `In Development`, or `In UAT` status cannot be deleted.
 
 ## Path Aliases
 `@/*` maps to project root (e.g., `@/lib/supabase/server`, `@/types/database`)
@@ -88,33 +99,72 @@ Building with CI/CD in mind from the start:
 - Vercel for hosting with automatic preview deployments on PRs
 - Environment separation: development, staging, production
 
+## Branding
+
+The dashboard uses Propel Health brand styling with "Powered by Propel Health Platform" tagline.
+
+**Brand Colors:**
+- Primary Teal: #0C8181
+- Gold (accent/CTAs): #F9BC15
+- Navy (sidebar/dark backgrounds): #34353F
+
+**Brand Font:** Montserrat (Google Fonts)
+
+**Key Branding Locations:**
+- Login page: Navy background, gold accents
+- Sidebar: Navy background, gold logo icon
+- Mobile nav: Navy background, gold logo icon
+- Footer tagline: "Powered by Propel Health Platform"
+
 ## Multi-Client Considerations
 Future requirement to support multiple clients (e.g., Providence, Kaiser):
 - Approach TBD - options include:
   - Separate deployments per client with different branding/config
   - Single multi-tenant app with client isolation
   - White-label solution with configurable theming
-- Keep branding tokens/colors in centralized config for easy swapping
+- Keep branding tokens/colors in centralized config for easy swapping (currently in tailwind.config.ts and globals.css)
 - Design database schema with client isolation in mind
 
 ## Current Phase
-Phase 2: Core Dashboard & Data Display (In Progress)
-- [x] Client-side filtering & search ✅
-- [x] Story detail view with expand/collapse ✅
-- [x] Loading states and error boundaries ✅
-- [x] Real-time subscriptions ✅
-- [ ] Virtual scrolling for large lists
-- [ ] Mobile responsive refinements
+Phase 3.5: Story Relationships (Next - NEW Jan 26, 2026)
+- [ ] Linked stories UI (similar/related stories)
+- [ ] Parent-child hierarchy (one level deep)
+- [ ] Visual relationship display on detail page
+- [ ] AI relationship suggestions (auto-detect similar/child stories)
 
-**Completed:** Phase 1 - Foundation & Authentication
+Phase 4: Approval Workflow (After 3.5)
+- [ ] Status transition component with validation
+- [ ] Approval action modal with notes
+- [ ] Email notifications for status changes
+- [ ] Bulk approval functionality
+- [ ] Approval history timeline
+
+**Completed:**
+- Phase 1 - Foundation & Authentication ✅
+- Phase 2 - Core Dashboard & Data Display ✅ (Jan 26, 2026)
+  - Mobile navigation drawer, responsive card/table views
+  - Virtual scrolling for 50+ items (@tanstack/react-virtual)
+- Phase 3 - CRUD Operations & Versioning ✅ (Jan 26, 2026)
+  - Story creation form with validation (react-hook-form + Zod)
+  - Story edit page with optimistic locking
+  - Story deletion with confirmation dialog (Admin only)
+  - Version history diff viewer with compare mode
+  - Comment submission with real-time updates
+
+## Story Relationships (Database Fields)
+- `parent_story_id` TEXT - References parent story for hierarchy (one level)
+- `related_stories` JSONB - Array of linked story IDs for similar stories
 
 ## Key Components
 
 ### Stories
-- `components/stories/stories-list.tsx` - Client component with filtering (program, status, priority) and search
+- `components/stories/stories-list.tsx` - Client component with filtering, search, mobile card view, and virtual scrolling (50+ items)
 - `components/stories/stories-list-realtime.tsx` - Wrapper that adds real-time subscriptions to StoriesList
 - `components/stories/collapsible-section.tsx` - Reusable expand/collapse section with icon, badge support
-- `components/stories/comments-section.tsx` - Real-time comments for story detail page
+- `components/stories/comments-section.tsx` - Real-time comments with submission form
+- `components/stories/story-form.tsx` - Reusable form for create/edit with react-hook-form + Zod validation
+- `components/stories/story-actions.tsx` - Edit/Delete buttons with confirmation dialog
+- `components/stories/version-history.tsx` - Expandable version list with diff comparison
 
 ### Hooks (Real-time Subscriptions)
 - `hooks/use-realtime-subscription.ts` - Generic Supabase real-time subscription hook with cleanup
@@ -126,8 +176,9 @@ Phase 2: Core Dashboard & Data Display (In Progress)
 - `components/ui/loading-spinner.tsx` - Loading spinner with sizes (sm, md, lg) and LoadingPage component
 
 ### Layout
-- `components/layout/sidebar.tsx` - Role-based navigation
-- `components/layout/header.tsx` - User menu, notifications
+- `components/layout/sidebar.tsx` - Role-based navigation (desktop)
+- `components/layout/header.tsx` - User menu, notifications, mobile menu trigger
+- `components/layout/mobile-nav.tsx` - Slide-out drawer navigation for mobile/tablet
 
 ## User Setup (Important)
 
@@ -167,7 +218,70 @@ CREATE POLICY "Anyone can read programs" ON programs FOR SELECT USING (true);
 
 ### `user_stories` Table
 ```sql
-CREATE POLICY "Authenticated users can read stories" ON user_stories FOR SELECT USING (auth.uid() IS NOT NULL);
+-- SELECT: Authenticated users can read
+CREATE POLICY "Authenticated users can read stories" ON user_stories
+FOR SELECT USING (auth.uid() IS NOT NULL);
+
+-- INSERT: Users can create stories for their assigned programs (Admin/Portfolio Manager for any)
+CREATE POLICY "Users can insert stories for assigned programs" ON user_stories
+FOR INSERT TO authenticated
+WITH CHECK (
+  program_id IN (
+    SELECT unnest(assigned_programs) FROM users WHERE auth_id = auth.uid()
+  )
+  OR EXISTS (
+    SELECT 1 FROM users WHERE auth_id = auth.uid() AND role IN ('Admin', 'Portfolio Manager')
+  )
+);
+
+-- UPDATE: Users can update stories for their assigned programs
+CREATE POLICY "Users can update stories for assigned programs" ON user_stories
+FOR UPDATE TO authenticated
+USING (
+  program_id IN (
+    SELECT unnest(assigned_programs) FROM users WHERE auth_id = auth.uid()
+  )
+  OR EXISTS (
+    SELECT 1 FROM users WHERE auth_id = auth.uid() AND role IN ('Admin', 'Portfolio Manager')
+  )
+)
+WITH CHECK (
+  program_id IN (
+    SELECT unnest(assigned_programs) FROM users WHERE auth_id = auth.uid()
+  )
+  OR EXISTS (
+    SELECT 1 FROM users WHERE auth_id = auth.uid() AND role IN ('Admin', 'Portfolio Manager')
+  )
+);
+
+-- DELETE: Admins only, cannot delete client-approved stories in protected statuses
+CREATE POLICY "Admins can delete non-protected stories" ON user_stories
+FOR DELETE TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM users WHERE auth_id = auth.uid() AND role = 'Admin'
+  )
+  AND NOT (
+    stakeholder_approved_at IS NOT NULL
+    AND status IN ('Approved', 'In Development', 'In UAT')
+  )
+);
+```
+
+### `story_comments`, `story_approvals`, `story_versions` Tables
+```sql
+-- DELETE: Admins only (for cascading deletes when deleting stories)
+CREATE POLICY "Admins can delete story comments" ON story_comments
+FOR DELETE TO authenticated
+USING (EXISTS (SELECT 1 FROM users WHERE auth_id = auth.uid() AND role = 'Admin'));
+
+CREATE POLICY "Admins can delete story approvals" ON story_approvals
+FOR DELETE TO authenticated
+USING (EXISTS (SELECT 1 FROM users WHERE auth_id = auth.uid() AND role = 'Admin'));
+
+CREATE POLICY "Admins can delete story versions" ON story_versions
+FOR DELETE TO authenticated
+USING (EXISTS (SELECT 1 FROM users WHERE auth_id = auth.uid() AND role = 'Admin'));
 ```
 
 Without these policies, the app shows empty tables even when data exists.
@@ -198,6 +312,9 @@ ALTER PUBLICATION supabase_realtime ADD TABLE story_comments;
 | Build fails with "type 'never'" errors | Supabase type inference issue | Temporarily: `ignoreBuildErrors: true` in next.config.js. Properly: regenerate types with `supabase gen types typescript` |
 | Stories/programs table shows empty | RLS blocking SELECT | Add SELECT policies for `programs` and `user_stories` tables |
 | Version trigger fails on INSERT | No authenticated user | Disable trigger: `ALTER TABLE user_stories DISABLE TRIGGER user_stories_version_trigger;` then re-enable after |
+| "violates foreign key constraint story_versions_story_id_fkey" on story creation | Version trigger set to BEFORE INSERT instead of AFTER INSERT | Fix trigger: `DROP TRIGGER user_stories_version_trigger ON user_stories; CREATE TRIGGER user_stories_version_trigger AFTER INSERT OR UPDATE ON user_stories FOR EACH ROW EXECUTE FUNCTION create_story_version();` |
+| Story create/update/delete silently fails | Missing RLS policy for that operation | Add INSERT/UPDATE/DELETE policies to `user_stories` table (see RLS Policies section) |
+| Delete appears to succeed but story still exists | Missing DELETE RLS policy | Add DELETE policy for Admins on `user_stories` and related tables |
 
 ## Known Technical Debt
 
@@ -205,13 +322,27 @@ ALTER PUBLICATION supabase_realtime ADD TABLE story_comments;
 
 ## Future Features (Backlog)
 
-### Risk Assessment Tool
-Help users without software risk management experience evaluate requirements for prioritization and scheduling. Features may include:
-- Risk scoring matrix (likelihood × impact)
-- Guided assessment questionnaire
-- Risk categories: technical complexity, dependencies, resources, skills, integration, security, timeline
+### Risk Assessment Tool with AI Advisor
+Help users without software risk management experience evaluate requirements for prioritization and scheduling.
+
+**Full Design Document:** `docs/AI_Risk_Advisor_Design.md`
+
+**Key Features:**
+- AI-powered risk analysis using Claude API
+- Risk scoring matrix (likelihood × impact, 1-25 scale)
+- Program goals management with alignment tracking
+- Conversational Q&A interface for follow-up questions
 - Visual risk indicators on story cards
 - Risk-adjusted priority recommendations
-- AI-assisted risk identification from story content
+- FDA 21 CFR Part 11 compliant audit trail
 
-See `Project_Progress.md` for full details.
+**New Database Tables:**
+- `program_goals` - Strategic goals by program/quarter
+- `story_risk_assessments` - Immutable assessment records
+- `risk_conversations` - AI chat history
+- `goal_story_alignments` - Goal-to-story mapping
+- `risk_factors_catalog` - Configurable risk categories
+
+**Implementation Timeline:** ~12 weeks (after Phase 4 Approval Workflow)
+
+See `Project_Progress.md` and `docs/AI_Risk_Advisor_Design.md` for full details.

@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { FileText, CheckCircle, Clock, AlertTriangle } from "lucide-react"
 
@@ -102,53 +103,97 @@ export default async function DashboardPage() {
         <div className="divide-y divide-border">
           {recentStories && recentStories.length > 0 ? (
             recentStories.map((story) => (
-              <div
+              <Link
                 key={story.story_id}
-                className="px-6 py-4 flex items-center justify-between hover:bg-muted/50 transition-colors"
+                href={`/stories/${story.story_id}`}
+                className="block px-4 sm:px-6 py-4 hover:bg-muted/50 transition-colors"
               >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
+                {/* Mobile layout: stacked */}
+                <div className="sm:hidden space-y-2">
+                  <p className="text-sm font-medium text-foreground line-clamp-2">
                     {story.title}
                   </p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs font-mono text-muted-foreground">
-                      {story.story_id}
-                    </span>
-                    <span className="text-muted-foreground">·</span>
-                    <span className="text-xs text-muted-foreground">
-                      {story.program_id}
-                    </span>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="font-mono">{story.story_id}</span>
+                    <span>·</span>
+                    <span>{story.program_id}</span>
                   </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  {story.priority && (
+                  <div className="flex flex-wrap gap-2">
                     <span
-                      className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                        story.priority === "Must Have"
-                          ? "bg-destructive/10 text-destructive"
-                          : story.priority === "Should Have"
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                        story.status === "Approved"
+                          ? "bg-success/10 text-success"
+                          : story.status === "Pending Client Review"
                           ? "bg-warning/10 text-warning"
+                          : story.status === "Needs Discussion"
+                          ? "bg-destructive/10 text-destructive"
                           : "bg-muted text-muted-foreground"
                       }`}
                     >
-                      {story.priority}
+                      {story.status}
                     </span>
-                  )}
-                  <span
-                    className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                      story.status === "Approved"
-                        ? "bg-success/10 text-success"
-                        : story.status === "Pending Client Review"
-                        ? "bg-warning/10 text-warning"
-                        : story.status === "Needs Discussion"
-                        ? "bg-destructive/10 text-destructive"
-                        : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {story.status}
-                  </span>
+                    {story.priority && (
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                          story.priority === "Must Have"
+                            ? "bg-destructive/10 text-destructive"
+                            : story.priority === "Should Have"
+                            ? "bg-warning/10 text-warning"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {story.priority}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
+
+                {/* Desktop layout: horizontal */}
+                <div className="hidden sm:flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {story.title}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs font-mono text-muted-foreground">
+                        {story.story_id}
+                      </span>
+                      <span className="text-muted-foreground">·</span>
+                      <span className="text-xs text-muted-foreground">
+                        {story.program_id}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0 ml-4">
+                    {story.priority && (
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                          story.priority === "Must Have"
+                            ? "bg-destructive/10 text-destructive"
+                            : story.priority === "Should Have"
+                            ? "bg-warning/10 text-warning"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {story.priority}
+                      </span>
+                    )}
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                        story.status === "Approved"
+                          ? "bg-success/10 text-success"
+                          : story.status === "Pending Client Review"
+                          ? "bg-warning/10 text-warning"
+                          : story.status === "Needs Discussion"
+                          ? "bg-destructive/10 text-destructive"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {story.status}
+                    </span>
+                  </div>
+                </div>
+              </Link>
             ))
           ) : (
             <div className="px-6 py-12 text-center">

@@ -23,6 +23,7 @@ export function CollapsibleSection({
   return (
     <div className="rounded-lg bg-card shadow-sm border border-border overflow-hidden">
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="w-full px-6 py-4 flex items-center justify-between hover:bg-muted/50 transition-colors"
       >

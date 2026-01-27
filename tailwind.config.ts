@@ -9,33 +9,38 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      // Providence branding colors
+      // Propel Health branding colors
       colors: {
         // Primary brand colors
         primary: {
-          DEFAULT: "#0F766E", // Teal - headers, buttons, links
+          DEFAULT: "#0C8181", // Teal - headers, buttons, links
           foreground: "#FFFFFF",
-          50: "#F0FDFA",
-          100: "#CCFBF1",
-          200: "#99F6E4",
-          300: "#5EEAD4",
-          400: "#2DD4BF",
-          500: "#14B8A6",
-          600: "#0D9488",
-          700: "#0F766E",
-          800: "#115E59",
-          900: "#134E4A",
+          50: "#A0F1F1",
+          100: "#7AEAEA",
+          200: "#54E3E3",
+          300: "#30D9D8",
+          400: "#21B5B5",
+          500: "#0C8181",
+          600: "#0A6B6B",
+          700: "#085555",
+          800: "#063F3F",
+          900: "#042929",
         },
-        // Secondary brand color
+        // Secondary brand color (Gold accent)
         secondary: {
-          DEFAULT: "#1E3A5F", // Navy - gradients, accents
+          DEFAULT: "#F9BC15", // Gold - CTAs, highlights
+          foreground: "#34353F",
+        },
+        // Dark navy for contrast
+        navy: {
+          DEFAULT: "#34353F",
           foreground: "#FFFFFF",
         },
         // Background colors
         background: "#F8FAFB", // Light gray page background
         surface: "#FFFFFF", // White cards, modals
         // Text colors
-        foreground: "#1E293B", // Dark slate - body text
+        foreground: "#34353F", // Dark navy - body text
         muted: {
           DEFAULT: "#F1F5F9",
           foreground: "#64748B", // Slate - muted text, labels
@@ -46,8 +51,8 @@ const config: Config = {
           foreground: "#FFFFFF",
         },
         warning: {
-          DEFAULT: "#D97706", // Orange - pending, caution
-          foreground: "#FFFFFF",
+          DEFAULT: "#F9BC15", // Gold - pending, caution (matches brand)
+          foreground: "#34353F",
         },
         destructive: {
           DEFAULT: "#DC2626", // Red - errors, Must Have priority
@@ -56,26 +61,36 @@ const config: Config = {
         // UI colors
         border: "#E2E8F0",
         input: "#E2E8F0",
-        ring: "#0F766E",
+        ring: "#0C8181", // Teal focus ring
         // Card
         card: {
           DEFAULT: "#FFFFFF",
-          foreground: "#1E293B",
+          foreground: "#34353F",
         },
         // Popover
         popover: {
           DEFAULT: "#FFFFFF",
-          foreground: "#1E293B",
+          foreground: "#34353F",
         },
-        // Accent
+        // Accent (light blue from palette)
         accent: {
-          DEFAULT: "#F1F5F9",
-          foreground: "#1E293B",
+          DEFAULT: "#8DAFCD",
+          foreground: "#34353F",
+        },
+        // Propel-specific colors
+        propel: {
+          navy: "#34353F",
+          gold: "#F9BC15",
+          teal: "#0C8181",
+          "teal-medium": "#21B5B5",
+          cyan: "#30D9D8",
+          "cyan-light": "#A0F1F1",
+          "blue-light": "#8DAFCD",
         },
       },
-      // Providence branding fonts
+      // Propel branding fonts
       fontFamily: {
-        sans: ["DM Sans", "system-ui", "sans-serif"],
+        sans: ["Montserrat", "Arial", "system-ui", "sans-serif"],
         mono: ["JetBrains Mono", "monospace"],
       },
       // Border radius tokens

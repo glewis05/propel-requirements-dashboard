@@ -471,6 +471,82 @@ Row Level Security (RLS) will enforce permissions at the database level:
 
 -   Admins: Full access to all tables (service role)
 
+**6.4 Story Relationships (Added January 26, 2026)**
+
+This section documents the story relationship requirements requested by stakeholders.
+
+**6.4.1 Linked Stories (Similar/Related)**
+
+**Use Case:** A feature is 95% the same across programs but has unique program-specific differences. Users need to link these related stories together to track them as a group.
+
+**Requirements:**
+-   Users can link any story to one or more other stories
+-   Links are bidirectional (if A links to B, B shows link to A)
+-   Link relationship stored in `related_stories` JSON field
+-   UI to add/remove linked stories from story detail page
+-   Visual indicator on story cards showing linked story count
+
+**Database:**
+-   Uses existing `related_stories` JSONB field on `user_stories` table
+-   Structure: `["story-id-1", "story-id-2", ...]`
+
+**6.4.2 Parent-Child Hierarchy**
+
+**Use Case:** A high-level requirement (e.g., "Dashboard needs new column") has sub-requirements that provide specific details (e.g., "Column displays aggregated data"). Users need to nest these in a parent-child relationship.
+
+**Requirements:**
+-   Stories can have ONE parent (optional)
+-   Stories can have MULTIPLE children
+-   Hierarchy limited to ONE level deep (parent → children only, no grandchildren)
+-   UI to set/change parent from story detail or edit page
+-   Visual tree display showing parent and siblings when viewing a child
+-   Visual list of children when viewing a parent
+
+**Database:**
+-   Uses existing `parent_story_id` TEXT field on `user_stories` table
+-   References `user_stories.story_id`
+
+**6.4.3 Visual Relationship Display**
+
+**Requirements:**
+-   Story detail page shows "Related Stories" section when links exist
+-   Story detail page shows "Parent Story" with link when story has parent
+-   Story detail page shows "Child Stories" list when story has children
+-   Clickable links to navigate between related/parent/child stories
+-   Badge indicators on story list showing relationship counts
+-   Collapsible sections for relationship display
+
+**6.4.4 AI Relationship Suggestions**
+
+**Use Case:** After creating a new story, AI analyzes the database and suggests potential relationships to reduce manual effort and ensure nothing is missed.
+
+**Requirements:**
+-   After story creation, AI analyzes title, user story, and acceptance criteria
+-   AI compares against existing stories in same program (and optionally across programs)
+-   AI suggests: "This appears similar to [Story X] - would you like to link them?"
+-   AI suggests: "This appears to be a sub-requirement of [Story Y] - would you like to nest it?"
+-   User can accept, reject, or dismiss suggestions
+-   Suggestions appear as non-blocking notification/panel
+-   Confidence score shown for each suggestion
+-   User feedback (accept/reject) logged for future AI improvement
+
+**AI Analysis Criteria:**
+-   Title similarity (fuzzy matching)
+-   User story semantic similarity
+-   Same category/subcategory
+-   Overlapping keywords in acceptance criteria
+-   Same program vs. related program (for cross-program linking)
+
+**API Endpoint:**
+-   `POST /api/ai/suggest-relationships` - Analyze story and return suggestions
+-   Request: `{ storyId: string, includeHierarchy: boolean, includeCrossProgram: boolean }`
+-   Response: `{ linkedSuggestions: [...], parentSuggestions: [...] }`
+
+**Integration with AI Risk Advisor:**
+-   Relationship suggestions can be integrated into the Risk Advisor panel
+-   Or implemented as a separate "AI Assistant" component
+-   Shares Claude API infrastructure with Risk Advisor
+
 **7. Project Phases**
 
 The project is divided into 7 phases, each building on the previous.
@@ -584,6 +660,12 @@ Estimated total duration: 8-10 weeks.
 
 -   Create requirement-to-test case linking interface
 
+-   **[NEW - Jan 26, 2026]** Implement story-to-story linking (similar/related stories)
+
+-   **[NEW - Jan 26, 2026]** Implement parent-child story hierarchy (one level deep)
+
+-   **[NEW - Jan 26, 2026]** Build visual relationship display on story detail page
+
 **Deliverables:**
 
 -   Full CRUD operations for stories
@@ -599,6 +681,10 @@ Estimated total duration: 8-10 weeks.
 -   Story templates for common patterns
 
 -   Traceability linking interface
+
+-   **[NEW]** Story linking interface with visual display
+
+-   **[NEW]** Parent-child hierarchy with visual tree display
 
 **Phase 4: Approval Workflow**
 

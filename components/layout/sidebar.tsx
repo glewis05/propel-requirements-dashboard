@@ -65,13 +65,13 @@ export function Sidebar({ userRole }: SidebarProps) {
 
   return (
     <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col">
-      <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-secondary px-6 pb-4">
+      <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-propel-navy px-6 pb-4">
         {/* Logo */}
         <div className="flex h-16 shrink-0 items-center">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-propel-gold">
               <svg
-                className="h-6 w-6 text-primary-foreground"
+                className="h-6 w-6 text-propel-navy"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -85,8 +85,8 @@ export function Sidebar({ userRole }: SidebarProps) {
               </svg>
             </div>
             <div>
-              <span className="text-lg font-bold text-white">Propel Health</span>
-              <p className="text-xs text-white/60">Requirements</p>
+              <span className="text-lg font-bold text-white">Propel</span>
+              <p className="text-xs text-propel-gold">Requirements Dashboard</p>
             </div>
           </div>
         </div>
@@ -127,6 +127,13 @@ export function Sidebar({ userRole }: SidebarProps) {
             <div className="h-2 w-2 rounded-full bg-success" />
             <span className="text-xs font-medium text-white/80">{userRole}</span>
           </div>
+        </div>
+
+        {/* Powered by PHP tagline */}
+        <div className="border-t border-white/10 pt-3 mt-auto">
+          <p className="text-[10px] text-white/40 text-center">
+            Powered by <span className="text-propel-gold font-medium">Propel Health Platform</span>
+          </p>
         </div>
       </div>
     </div>

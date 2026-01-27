@@ -13,6 +13,8 @@ export type StoryStatus =
   | "Internal Review"
   | "Pending Client Review"
   | "Approved"
+  | "In Development"
+  | "In UAT"
   | "Needs Discussion"
   | "Out of Scope"
 
@@ -300,24 +302,30 @@ export interface Database {
       programs: {
         Row: {
           program_id: string
-          program_name: string
+          name: string
+          prefix: string | null
           description: string | null
+          client_id: string | null
           status: string
           created_at: string
           updated_at: string
         }
         Insert: {
           program_id: string
-          program_name: string
+          name: string
+          prefix?: string | null
           description?: string | null
+          client_id?: string | null
           status?: string
           created_at?: string
           updated_at?: string
         }
         Update: {
           program_id?: string
-          program_name?: string
+          name?: string
+          prefix?: string | null
           description?: string | null
+          client_id?: string | null
           status?: string
           created_at?: string
           updated_at?: string
