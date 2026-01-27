@@ -18,7 +18,8 @@ import { StoryActions } from "@/components/stories/story-actions"
 import { VersionHistory } from "@/components/stories/version-history"
 import { StoryRelationshipsDisplay } from "@/components/stories/story-relationships-display"
 import { StatusTransitionWrapper } from "@/components/stories/status-transition-wrapper"
-import type { StoryStatus, UserRole } from "@/types/database"
+import { ApprovalHistoryTimeline } from "@/components/stories/approval-history-timeline"
+import type { StoryStatus, UserRole, ApprovalType, ApprovalStatus } from "@/types/database"
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'
@@ -62,6 +63,42 @@ export default async function StoryDetailPage({ params }: Props) {
     .select("*")
     .eq("story_id", id)
     .order("version_number", { ascending: false })
+
+  // Fetch approval history
+  const { data: approvals } = await supabase
+    .from("story_approvals")
+    .select("*")
+    .eq("story_id", id)
+    .order("approved_at", { ascending: false })
+
+  // Fetch user names for approvals and versions
+  const userIds = new Set<string>()
+  approvals?.forEach(a => userIds.add(a.approved_by))
+  versions?.forEach(v => userIds.add(v.changed_by))
+
+  const { data: userNames } = await supabase
+    .from("users")
+    .select("user_id, auth_id, name")
+    .or(`user_id.in.(${Array.from(userIds).join(',')}),auth_id.in.(${Array.from(userIds).join(',')})`)
+
+  const userNameMap = new Map<string, string>()
+  userNames?.forEach(u => {
+    userNameMap.set(u.user_id, u.name)
+    if (u.auth_id) userNameMap.set(u.auth_id, u.name)
+  })
+
+  // Add names to approvals and versions
+  const approvalsWithNames = (approvals || []).map(a => ({
+    ...a,
+    approval_type: a.approval_type as ApprovalType,
+    status: a.status as ApprovalStatus,
+    approver_name: userNameMap.get(a.approved_by) || "Unknown",
+  }))
+
+  const versionsWithNames = (versions || []).map(v => ({
+    ...v,
+    changer_name: userNameMap.get(v.changed_by) || "Unknown",
+  }))
 
   // Get current user role for permissions
   const { data: { user } } = await supabase.auth.getUser()
@@ -480,6 +517,14 @@ export default async function StoryDetailPage({ params }: Props) {
           <VersionHistory
             versions={versions || []}
             currentVersion={story.version}
+          />
+
+          {/* Approval History Timeline */}
+          <ApprovalHistoryTimeline
+            approvals={approvalsWithNames}
+            versions={versionsWithNames}
+            storyCreatedAt={story.created_at}
+            creatorName={versionsWithNames.find(v => v.version_number === 1)?.changer_name}
           />
         </div>
       </div>
