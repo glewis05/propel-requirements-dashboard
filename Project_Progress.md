@@ -1,7 +1,7 @@
 # Requirements Dashboard - Development Status
 
 **Last Updated:** January 26, 2026
-**Session:** Phase 3 - CRUD Operations & Versioning (Testing & Bug Fixes)
+**Session:** Phase 3.5 Complete - Story Relationships
 
 ---
 
@@ -350,28 +350,35 @@ Enable Realtime on tables in Dashboard > Database > Replication:
 - [ ] Baselining capability for releases (deferred)
 - [ ] Story templates (deferred)
 
-### Phase 3.5: Story Relationships (NEW - Jan 26, 2026)
+### Phase 3.5: Story Relationships ✅ COMPLETE (Jan 26, 2026)
 **Stakeholder Request:** Enable linking and hierarchy for related requirements
 
 **Linked Stories (Similar/Related)**
-- [ ] UI to link stories on story detail page
-- [ ] Bidirectional link display (A→B shows B→A)
-- [ ] Visual indicator on story cards showing link count
-- [ ] Linked stories section on detail page
+- [x] UI to link stories on story detail page ✅
+- [x] Bidirectional link display (A→B shows B→A) ✅
+- [x] Visual indicator on story cards showing link count ✅
+- [x] Linked stories section on detail page ✅
 
 **Parent-Child Hierarchy**
-- [ ] UI to set parent story on detail/edit page
-- [ ] One level deep only (parent → children)
-- [ ] Parent story display when viewing child
-- [ ] Children list when viewing parent
+- [x] UI to set parent story on detail/edit page ✅
+- [x] One level deep only (parent → children) ✅
+- [x] Parent story display when viewing child ✅
+- [x] Children list when viewing parent ✅
 
 **Visual Relationship Display**
-- [ ] "Related Stories" collapsible section
-- [ ] "Parent Story" link display
-- [ ] "Child Stories" list display
-- [ ] Navigation between related stories
+- [x] "Related Stories" collapsible section ✅
+- [x] "Parent Story" link display ✅
+- [x] "Child Stories" list display ✅
+- [x] Navigation between related stories ✅
 
-**AI Relationship Suggestions**
+**Components Created:**
+- `components/stories/related-stories-selector.tsx` - Search and select related stories
+- `components/stories/story-relationships-display.tsx` - Display parent/child/related stories
+
+**Database Migration:**
+- `supabase/migrations/002_story_relationships.sql` - Added relationship fields
+
+**AI Relationship Suggestions (Deferred)**
 - [ ] AI analyzes new stories for similarities
 - [ ] Suggests: "Similar to [X] - link them?"
 - [ ] Suggests: "Child of [Y] - nest it?"
@@ -672,22 +679,18 @@ USING (EXISTS (SELECT 1 FROM users WHERE auth_id = auth.uid() AND role = 'Admin'
 
 ## Next Steps When Resuming
 
-### Phase 3.5: Story Relationships (Next)
-1. **Linked Stories UI** - Add ability to link related/similar stories
-2. **Parent-Child Hierarchy** - One level deep nesting
-3. **Visual Relationship Display** - Show links on detail page
-4. **AI Suggestions** - Auto-detect similar stories (future)
+### Phase 4: Approval Workflow (Next)
+1. **Status Transition Component** - Dropdown/buttons with validation rules for allowed transitions
+2. **Approval Action Modal** - Capture approval notes, confirmation before status change
+3. **Email Notifications** - Send emails on status changes (Supabase Edge Functions or external service)
+4. **Bulk Approval** - Select multiple stories and approve at once
+5. **Approval History Timeline** - Visual timeline of all status changes and approvals
 
-### Phase 4: Approval Workflow
-- Status transition component with validation
-- Approval action modal with notes
-- Email notifications for status changes
-- Bulk approval functionality
-
-### Deferred Items (Phase 3)
-- Rich text editor for acceptance criteria
-- Baselining capability for releases
-- Story templates
+### Deferred Items
+- Rich text editor for acceptance criteria (Phase 3)
+- Baselining capability for releases (Phase 3)
+- Story templates (Phase 3)
+- AI relationship suggestions (Phase 3.5)
 
 ---
 

@@ -126,13 +126,7 @@ Future requirement to support multiple clients (e.g., Providence, Kaiser):
 - Design database schema with client isolation in mind
 
 ## Current Phase
-Phase 3.5: Story Relationships (Next - NEW Jan 26, 2026)
-- [ ] Linked stories UI (similar/related stories)
-- [ ] Parent-child hierarchy (one level deep)
-- [ ] Visual relationship display on detail page
-- [ ] AI relationship suggestions (auto-detect similar/child stories)
-
-Phase 4: Approval Workflow (After 3.5)
+Phase 4: Approval Workflow (Current)
 - [ ] Status transition component with validation
 - [ ] Approval action modal with notes
 - [ ] Email notifications for status changes
@@ -150,6 +144,12 @@ Phase 4: Approval Workflow (After 3.5)
   - Story deletion with confirmation dialog (Admin only)
   - Version history diff viewer with compare mode
   - Comment submission with real-time updates
+- Phase 3.5 - Story Relationships ✅ (Jan 26, 2026)
+  - Linked stories UI with related stories selector
+  - Parent-child hierarchy (one level deep)
+  - Visual relationship display on story detail page
+  - Database migration for story relationships
+  - AI relationship suggestions (deferred to future)
 
 ## Story Relationships (Database Fields)
 - `parent_story_id` TEXT - References parent story for hierarchy (one level)
@@ -165,6 +165,8 @@ Phase 4: Approval Workflow (After 3.5)
 - `components/stories/story-form.tsx` - Reusable form for create/edit with react-hook-form + Zod validation
 - `components/stories/story-actions.tsx` - Edit/Delete buttons with confirmation dialog
 - `components/stories/version-history.tsx` - Expandable version list with diff comparison
+- `components/stories/related-stories-selector.tsx` - Search and select related/linked stories
+- `components/stories/story-relationships-display.tsx` - Display parent, child, and related story links
 
 ### Hooks (Real-time Subscriptions)
 - `hooks/use-realtime-subscription.ts` - Generic Supabase real-time subscription hook with cleanup
