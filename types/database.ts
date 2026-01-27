@@ -22,6 +22,14 @@ export type ApprovalType = "internal_review" | "stakeholder" | "portfolio"
 
 export type ApprovalStatus = "approved" | "rejected" | "needs_discussion"
 
+export interface NotificationPreferences {
+  email_enabled: boolean
+  status_changes: boolean
+  comments: boolean
+  approvals: boolean
+  mentions: boolean
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -41,6 +49,7 @@ export interface Database {
           avatar_url: string | null
           last_login_at: string | null
           auth_id: string | null
+          notification_preferences: NotificationPreferences | null
         }
         Insert: {
           user_id: string
@@ -57,6 +66,7 @@ export interface Database {
           avatar_url?: string | null
           last_login_at?: string | null
           auth_id?: string | null
+          notification_preferences?: NotificationPreferences | null
         }
         Update: {
           user_id?: string
@@ -73,6 +83,7 @@ export interface Database {
           avatar_url?: string | null
           last_login_at?: string | null
           auth_id?: string | null
+          notification_preferences?: NotificationPreferences | null
         }
       }
       user_stories: {

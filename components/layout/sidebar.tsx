@@ -11,6 +11,7 @@ import {
   Users,
   Settings,
   BarChart3,
+  Bell,
 } from "lucide-react"
 
 interface SidebarProps {
@@ -53,6 +54,12 @@ const navigation = [
     href: "/admin/settings",
     icon: Settings,
     roles: ["Admin"],
+  },
+  {
+    name: "Notifications",
+    href: "/settings/notifications",
+    icon: Bell,
+    roles: ["Portfolio Manager", "Program Manager", "Developer", "Admin"],
   },
 ]
 

@@ -12,6 +12,7 @@ import {
   Users,
   Settings,
   BarChart3,
+  Bell,
   X,
 } from "lucide-react"
 
@@ -58,6 +59,12 @@ const navigation = [
     href: "/admin/settings",
     icon: Settings,
     roles: ["Admin"],
+  },
+  {
+    name: "Notifications",
+    href: "/settings/notifications",
+    icon: Bell,
+    roles: ["Portfolio Manager", "Program Manager", "Developer", "Admin"],
   },
 ]
 

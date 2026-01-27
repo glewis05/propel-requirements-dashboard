@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache"
 import type { StoryFormData } from "@/lib/validations/story"
 import type { StoryStatus, ApprovalType, ApprovalStatus } from "@/types/database"
 import { canTransition, STATUS_CONFIG } from "@/lib/status-transitions"
+import { sendStatusChangeNotifications } from "@/lib/notifications/service"
 
 function generateStoryId(programId: string): string {
   // Generate a unique story ID: PROG-YYYYMMDD-XXXX
@@ -304,7 +305,7 @@ export async function transitionStoryStatus(
   // Fetch current story
   const { data: story, error: fetchError } = await supabase
     .from("user_stories")
-    .select("status, version, stakeholder_approved_at")
+    .select("status, version, stakeholder_approved_at, title, program_id")
     .eq("story_id", storyId)
     .single()
 
@@ -403,6 +404,17 @@ export async function transitionStoryStatus(
   revalidatePath(`/stories/${storyId}`)
   revalidatePath("/approvals")
   revalidatePath("/dashboard")
+
+  // Send email notifications (non-blocking)
+  sendStatusChangeNotifications({
+    storyId,
+    storyTitle: story.title,
+    programId: story.program_id,
+    previousStatus: currentStatus,
+    newStatus,
+    changedByUserId: userData.user_id,
+    notes,
+  }).catch((err) => console.error("Failed to send notifications:", err))
 
   return { success: true }
 }
