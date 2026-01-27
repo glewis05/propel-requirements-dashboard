@@ -126,15 +126,14 @@ Future requirement to support multiple clients (e.g., Providence, Kaiser):
 - Design database schema with client isolation in mind
 
 ## Current Phase
-Phase 4: Approval Workflow (Current)
-- [ ] Status transition component with validation
-- [ ] Approval action modal with notes
-- [ ] Email notifications for status changes
-- [ ] Bulk approval functionality
-- [ ] Approval history timeline
+Phase 5: Collaboration Features (Current)
+- [ ] Comment threading (reply to comments)
+- [ ] @mentions with autocomplete
+- [ ] Activity feed
+- [ ] Developer Q&A workflow
+- [ ] In-app notification center
 
 **Upcoming Phases:**
-- Phase 5: Collaboration Features (Threading, @mentions, Activity Feed)
 - Phase 6: Reporting & Traceability
 - Phase 7: AI Features (Relationship Suggestions, Risk Advisor)
 - Phase 8: Polish & Launch
@@ -155,6 +154,12 @@ Phase 4: Approval Workflow (Current)
   - Parent-child hierarchy (one level deep)
   - Visual relationship display on story detail page
   - Database migration for story relationships
+- Phase 4 - Approval Workflow ✅ (Jan 27, 2026)
+  - Status transition component with role-based permissions
+  - Approval modal with notes
+  - Email notifications via Resend (role-based, opt-in/opt-out)
+  - Notification settings page (/settings/notifications)
+  - Approval history timeline on story detail page
 
 ## Story Relationships (Database Fields)
 - `parent_story_id` TEXT - References parent story for hierarchy (one level)
