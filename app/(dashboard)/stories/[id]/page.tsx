@@ -16,7 +16,7 @@ import { CollapsibleSection } from "@/components/stories/collapsible-section"
 import { CommentsSection } from "@/components/stories/comments-section"
 import { StoryActions } from "@/components/stories/story-actions"
 import { VersionHistory } from "@/components/stories/version-history"
-import { StoryRelationshipsDisplay } from "@/components/stories/story-relationships-display"
+import { StoryRelationshipsWithAI } from "@/components/stories/story-relationships-with-ai"
 import { StatusTransitionWrapper } from "@/components/stories/status-transition-wrapper"
 import { ApprovalHistoryTimeline } from "@/components/stories/approval-history-timeline"
 import type { StoryStatus, UserRole, ApprovalType, ApprovalStatus } from "@/types/database"
@@ -412,11 +412,15 @@ export default async function StoryDetailPage({ params }: Props) {
           )}
 
           {/* Story Relationships */}
-          <StoryRelationshipsDisplay
+          <StoryRelationshipsWithAI
+            storyId={story.story_id}
+            storyTitle={story.title}
+            storyDescription={story.user_story || `${story.role || ""} ${story.capability || ""} ${story.benefit || ""}`.trim()}
             parentStory={parentStory}
             childStories={childStories}
             relatedStories={relatedStories}
             currentProgramId={story.program_id}
+            currentParentStoryId={story.parent_story_id}
           />
 
           {/* Comments with Real-time Updates */}

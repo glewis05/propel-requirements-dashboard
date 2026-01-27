@@ -16,6 +16,7 @@ import {
 } from "lucide-react"
 import { CollapsibleSection } from "./collapsible-section"
 import { RelatedStoriesSelector } from "./related-stories-selector"
+import { AIAcceptanceCriteria } from "./ai-acceptance-criteria"
 import {
   storyFormSchema,
   StoryFormData,
@@ -424,20 +425,35 @@ export function StoryForm({
         icon={<CheckSquare className="h-5 w-5 text-success" />}
         defaultOpen={true}
       >
-        <div>
-          <label htmlFor="acceptance_criteria" className="block text-sm font-medium text-foreground mb-1">
-            Acceptance Criteria
-          </label>
-          <textarea
-            id="acceptance_criteria"
-            rows={6}
-            {...register("acceptance_criteria")}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            placeholder="Given [precondition]&#10;When [action]&#10;Then [expected result]&#10;&#10;- Criterion 1&#10;- Criterion 2"
+        <div className="space-y-3">
+          {/* AI Acceptance Criteria Generator */}
+          <AIAcceptanceCriteria
+            storyTitle={watch("title") || ""}
+            storyDescription={watch("user_story") || `${watch("role") || ""} ${watch("capability") || ""} ${watch("benefit") || ""}`.trim()}
+            userType={watch("role") || undefined}
+            programName={programs.find(p => p.program_id === watchProgramId)?.name}
+            onAccept={(criteria) => {
+              const current = watch("acceptance_criteria") || ""
+              const newValue = current ? `${current}\n\n${criteria}` : criteria
+              setValue("acceptance_criteria", newValue, { shouldDirty: true })
+            }}
           />
-          <p className="mt-1 text-xs text-muted-foreground">
-            Use Given/When/Then format or bullet points to define acceptance criteria.
-          </p>
+
+          <div>
+            <label htmlFor="acceptance_criteria" className="block text-sm font-medium text-foreground mb-1">
+              Acceptance Criteria
+            </label>
+            <textarea
+              id="acceptance_criteria"
+              rows={6}
+              {...register("acceptance_criteria")}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="Given [precondition]&#10;When [action]&#10;Then [expected result]&#10;&#10;- Criterion 1&#10;- Criterion 2"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Use Given/When/Then format or bullet points to define acceptance criteria.
+            </p>
+          </div>
         </div>
       </CollapsibleSection>
 
