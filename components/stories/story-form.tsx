@@ -17,6 +17,7 @@ import {
 import { CollapsibleSection } from "./collapsible-section"
 import { RelatedStoriesSelector } from "./related-stories-selector"
 import { AIAcceptanceCriteria } from "./ai-acceptance-criteria"
+import { AIRelationshipSuggestions } from "./ai-relationship-suggestions"
 import {
   storyFormSchema,
   StoryFormData,
@@ -367,6 +368,23 @@ export function StoryForm({
           }
         >
           <div className="space-y-4">
+            {/* AI Relationship Suggestions - only in edit mode */}
+            {mode === "edit" && initialData?.story_id && (
+              <AIRelationshipSuggestions
+                storyId={initialData.story_id}
+                storyTitle={watch("title") || ""}
+                storyDescription={watch("user_story") || `${watch("role") || ""} ${watch("capability") || ""} ${watch("benefit") || ""}`.trim()}
+                currentRelatedStories={watchRelatedStories as string[]}
+                currentParentStoryId={watchParentStoryId || null}
+                onAddRelated={(id) => {
+                  const current = watchRelatedStories as string[]
+                  if (!current.includes(id)) {
+                    setValue("related_stories", [...current, id], { shouldDirty: true })
+                  }
+                }}
+              />
+            )}
+
             {/* Parent Story */}
             {potentialParents.length > 0 && (
               <div>
@@ -423,7 +441,7 @@ export function StoryForm({
       <CollapsibleSection
         title="Acceptance Criteria"
         icon={<CheckSquare className="h-5 w-5 text-success" />}
-        defaultOpen={true}
+        defaultOpen={false}
       >
         <div className="space-y-3">
           {/* AI Acceptance Criteria Generator */}

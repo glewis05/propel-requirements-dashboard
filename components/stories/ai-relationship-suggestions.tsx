@@ -25,6 +25,8 @@ interface AIRelationshipSuggestionsProps {
   storyDescription: string
   currentRelatedStories: string[]
   currentParentStoryId: string | null
+  /** Optional callback for form integration - when provided, updates form state instead of making API calls */
+  onAddRelated?: (storyId: string) => void
 }
 
 export function AIRelationshipSuggestions({
@@ -33,6 +35,7 @@ export function AIRelationshipSuggestions({
   storyDescription,
   currentRelatedStories,
   currentParentStoryId,
+  onAddRelated,
 }: AIRelationshipSuggestionsProps) {
   const router = useRouter()
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null)
@@ -82,6 +85,13 @@ export function AIRelationshipSuggestions({
     setAddingIds((prev) => new Set(prev).add(suggestion.story_id))
 
     try {
+      // If callback provided (form mode), use it instead of API call
+      if (onAddRelated) {
+        onAddRelated(suggestion.story_id)
+        setAddedIds((prev) => new Set(prev).add(suggestion.story_id))
+        return
+      }
+
       // For now, we only support adding as "related"
       // Parent relationships require more complex handling
       const newRelatedStories = [...currentRelatedStories, suggestion.story_id]
