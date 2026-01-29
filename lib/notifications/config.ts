@@ -32,7 +32,7 @@ export const STATUS_NOTIFICATION_RULES: Record<StoryStatus, {
     description: "A story has been moved to development",
   },
   "In UAT": {
-    notifyRoles: ["Admin", "Portfolio Manager", "Program Manager"],
+    notifyRoles: ["Admin", "Portfolio Manager", "Program Manager", "UAT Manager"],
     subject: "Story ready for UAT",
     description: "A story has been moved to UAT testing",
   },
@@ -72,6 +72,12 @@ export const NOTIFICATION_TYPES = {
     key: "mentions",
     label: "Mentions",
     description: "Get notified when someone mentions you in a comment",
+    defaultEnabled: true,
+  },
+  uat: {
+    key: "uat",
+    label: "UAT Activities",
+    description: "Get notified about test assignments, defect reports, and execution completion",
     defaultEnabled: true,
   },
 } as const

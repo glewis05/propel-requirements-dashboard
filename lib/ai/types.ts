@@ -53,3 +53,37 @@ export interface AIConfig {
   maxTokens: number
   temperature: number
 }
+
+// Test Case Generation Types
+export interface GeneratedTestStep {
+  step_number: number
+  action: string
+  expected_result: string
+  notes?: string
+}
+
+export interface GeneratedTestCase {
+  title: string
+  description: string
+  preconditions: string
+  test_steps: GeneratedTestStep[]
+  expected_results: string
+  test_type: string
+  priority: string
+}
+
+export interface TestCaseGenerationInput {
+  storyId: string
+  title: string
+  description: string
+  acceptanceCriteria?: string
+  userType?: string
+  programName?: string
+  category?: string
+}
+
+export interface TestCaseGenerationResponse {
+  success: boolean
+  testCases?: GeneratedTestCase[]
+  error?: string
+}

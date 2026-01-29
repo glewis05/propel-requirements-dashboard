@@ -70,10 +70,11 @@ export const STATUS_CONFIG: Record<StoryStatus, StatusConfig> = {
     label: "In UAT",
     color: "bg-secondary/10 text-secondary border-secondary/20",
     allowedTransitions: [
+      { to: "Approved", label: "UAT Complete - Accept", requiresNotes: false, requiresApproval: false },
       { to: "In Development", label: "Return to Development", requiresNotes: true, requiresApproval: false },
       { to: "Needs Discussion", label: "Flag for Discussion", requiresNotes: true, requiresApproval: false },
     ],
-    allowedRoles: ["Admin", "Portfolio Manager", "Program Manager"],
+    allowedRoles: ["Admin", "Portfolio Manager", "Program Manager", "UAT Manager"],
   },
   "Needs Discussion": {
     label: "Needs Discussion",

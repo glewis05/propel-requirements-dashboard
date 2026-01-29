@@ -9,6 +9,9 @@ import {
   Users,
   Settings,
   Bell,
+  FlaskConical,
+  RefreshCw,
+  UserCheck,
   type LucideIcon,
 } from "lucide-react"
 import type { UserRole } from "@/types/database"
@@ -59,16 +62,33 @@ const navigationGroups: NavGroup[] = [
         roles: ["Portfolio Manager", "Program Manager", "Developer", "Admin"],
       },
       {
-        name: "UAT",
-        href: "/uat",
-        icon: ClipboardCheck,
-        roles: ["Portfolio Manager", "Program Manager", "Developer", "Admin"],
-      },
-      {
         name: "Approvals",
         href: "/approvals",
         icon: CheckCircle,
         roles: ["Portfolio Manager", "Program Manager", "Admin"],
+      },
+    ],
+  },
+  {
+    label: "UAT Testing",
+    items: [
+      {
+        name: "UAT",
+        href: "/uat",
+        icon: FlaskConical,
+        roles: ["Portfolio Manager", "Program Manager", "Admin", "UAT Manager", "UAT Tester"],
+      },
+      {
+        name: "UAT Cycles",
+        href: "/uat/cycles",
+        icon: RefreshCw,
+        roles: ["Portfolio Manager", "Program Manager", "Admin", "UAT Manager"],
+      },
+      {
+        name: "Test Patients",
+        href: "/uat/test-patients",
+        icon: UserCheck,
+        roles: ["Portfolio Manager", "Program Manager", "Admin", "UAT Manager"],
       },
     ],
   },

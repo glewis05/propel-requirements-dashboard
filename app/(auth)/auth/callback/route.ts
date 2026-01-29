@@ -7,32 +7,48 @@ type UsersUpdate = Database["public"]["Tables"]["users"]["Update"]
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get("code")
-  const next = searchParams.get("next") ?? "/dashboard"
+  const requestedNext = searchParams.get("next")
 
   if (code) {
     const supabase = await createClient()
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
-      // Update last_login_at for the user
+      // Update last_login_at for the user and get their role
       const { data: { user } } = await supabase.auth.getUser()
+      let redirectPath = requestedNext ?? "/dashboard"
+
       if (user) {
-        const updateData: UsersUpdate = { last_login_at: new Date().toISOString() }
-        await supabase
+        const { data: userData } = await supabase
           .from("users")
-          .update(updateData)
+          .select("user_id, role")
           .eq("auth_id", user.id)
+          .single()
+
+        if (userData) {
+          // Update last login
+          const updateData: UsersUpdate = { last_login_at: new Date().toISOString() }
+          await supabase
+            .from("users")
+            .update(updateData as never)
+            .eq("auth_id", user.id)
+
+          // Redirect UAT Testers to tester portal by default (unless they requested a specific path)
+          if (!requestedNext && userData.role === "UAT Tester") {
+            redirectPath = "/tester"
+          }
+        }
       }
 
       const forwardedHost = request.headers.get("x-forwarded-host")
       const isLocalEnv = process.env.NODE_ENV === "development"
 
       if (isLocalEnv) {
-        return NextResponse.redirect(`${origin}${next}`)
+        return NextResponse.redirect(`${origin}${redirectPath}`)
       } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${next}`)
+        return NextResponse.redirect(`https://${forwardedHost}${redirectPath}`)
       } else {
-        return NextResponse.redirect(`${origin}${next}`)
+        return NextResponse.redirect(`${origin}${redirectPath}`)
       }
     }
   }

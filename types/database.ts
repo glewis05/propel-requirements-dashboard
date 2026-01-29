@@ -6,7 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type UserRole = "Portfolio Manager" | "Program Manager" | "Developer" | "Admin"
+export type UserRole = "Portfolio Manager" | "Program Manager" | "Developer" | "Admin" | "UAT Manager" | "UAT Tester"
 
 export type StoryStatus =
   | "Draft"
@@ -35,6 +35,13 @@ export type ActivityType =
   | "approval_rejected"
   | "story_linked"
   | "story_unlinked"
+  | "test_case_created"
+  | "test_case_generated"
+  | "test_assigned"
+  | "test_started"
+  | "test_completed"
+  | "defect_reported"
+  | "defect_resolved"
 
 export type NotificationType =
   | "mention"
@@ -44,6 +51,9 @@ export type NotificationType =
   | "approval_result"
   | "question_answered"
   | "assigned"
+  | "test_assigned"
+  | "defect_reported"
+  | "execution_complete"
 
 export type RequirementCategory =
   | "Functional"
@@ -65,12 +75,121 @@ export type RequirementStatus =
 
 export type CoverageType = "full" | "partial" | "derived"
 
+// UAT Types
+export type TestCaseStatus = "draft" | "ready" | "in_progress" | "completed" | "deprecated"
+
+export type ExecutionStatus = "assigned" | "in_progress" | "passed" | "failed" | "blocked" | "verified"
+
+export type DefectSeverity = "critical" | "high" | "medium" | "low"
+
+export type DefectStatus = "open" | "confirmed" | "in_progress" | "fixed" | "verified" | "closed"
+
+export type TestType = "functional" | "regression" | "integration" | "smoke" | "boundary" | "security" | "accessibility"
+
+// UAT Cycle Types
+export type CycleStatus = "draft" | "active" | "completed" | "archived"
+
+export type DistributionMethod = "equal" | "weighted"
+
+export type AssignmentType = "primary" | "cross_validation"
+
+export type IdentityMethod = "checkbox" | "signature"
+
+export interface TestStep {
+  step_number: number
+  action: string
+  expected_result: string
+  notes?: string
+}
+
+export interface StepResult {
+  step_number: number
+  status: "passed" | "failed" | "blocked" | "skipped"
+  actual_result: string
+  notes?: string
+  executed_at: string
+}
+
 export interface NotificationPreferences {
   email_enabled: boolean
   status_changes: boolean
   comments: boolean
   approvals: boolean
   mentions: boolean
+}
+
+// UAT Cycle Interfaces
+export interface UATCycle {
+  cycle_id: string
+  name: string
+  description: string | null
+  program_id: string
+  status: CycleStatus
+  distribution_method: DistributionMethod
+  cross_validation_enabled: boolean
+  cross_validation_percentage: number | null
+  validators_per_test: number | null
+  start_date: string | null
+  end_date: string | null
+  locked_at: string | null
+  locked_by: string | null
+  created_at: string
+  updated_at: string
+  created_by: string
+}
+
+export interface CycleTester {
+  id: string
+  cycle_id: string
+  user_id: string
+  capacity_weight: number
+  is_active: boolean
+  added_at: string
+  added_by: string
+}
+
+export interface TestPatient {
+  patient_id: string
+  program_id: string
+  patient_name: string
+  mrn: string
+  date_of_birth: string | null
+  description: string | null
+  test_data_notes: string | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+  created_by: string
+}
+
+export interface TesterAcknowledgment {
+  id: string
+  cycle_id: string
+  user_id: string
+  identity_confirmed_at: string
+  identity_method: IdentityMethod
+  hipaa_acknowledged_at: string
+  test_data_filter_acknowledged: boolean
+  ip_address: string | null
+  user_agent: string | null
+  created_at: string
+}
+
+export interface CycleAssignment {
+  id: string
+  cycle_id: string
+  execution_id: string
+  assignment_type: AssignmentType
+  cross_validation_group_id: string | null
+  assigned_at: string
+  assigned_by: string
+}
+
+export interface CrossValidationGroup {
+  group_id: string
+  cycle_id: string
+  test_case_id: string
+  created_at: string
 }
 
 export interface Database {
@@ -546,6 +665,432 @@ export interface Database {
           created_by?: string | null
         }
       }
+      test_cases: {
+        Row: {
+          test_case_id: string
+          story_id: string
+          program_id: string
+          title: string
+          description: string | null
+          preconditions: string | null
+          test_data: string | null
+          test_steps: Json
+          expected_results: string | null
+          test_type: string
+          priority: string
+          is_ai_generated: boolean
+          ai_model_used: string | null
+          human_reviewed: boolean
+          reviewed_by: string | null
+          reviewed_at: string | null
+          status: TestCaseStatus
+          version: number
+          created_at: string
+          updated_at: string
+          created_by: string
+          is_archived: boolean
+        }
+        Insert: {
+          test_case_id?: string
+          story_id: string
+          program_id: string
+          title: string
+          description?: string | null
+          preconditions?: string | null
+          test_data?: string | null
+          test_steps?: Json
+          expected_results?: string | null
+          test_type?: string
+          priority?: string
+          is_ai_generated?: boolean
+          ai_model_used?: string | null
+          human_reviewed?: boolean
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+          status?: TestCaseStatus
+          version?: number
+          created_at?: string
+          updated_at?: string
+          created_by: string
+          is_archived?: boolean
+        }
+        Update: {
+          test_case_id?: string
+          story_id?: string
+          program_id?: string
+          title?: string
+          description?: string | null
+          preconditions?: string | null
+          test_data?: string | null
+          test_steps?: Json
+          expected_results?: string | null
+          test_type?: string
+          priority?: string
+          is_ai_generated?: boolean
+          ai_model_used?: string | null
+          human_reviewed?: boolean
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+          status?: TestCaseStatus
+          version?: number
+          created_at?: string
+          updated_at?: string
+          created_by?: string
+          is_archived?: boolean
+        }
+      }
+      test_executions: {
+        Row: {
+          execution_id: string
+          test_case_id: string
+          story_id: string
+          assigned_to: string
+          assigned_by: string
+          assigned_at: string
+          status: ExecutionStatus
+          step_results: Json
+          started_at: string | null
+          completed_at: string | null
+          verified_by: string | null
+          verified_at: string | null
+          environment: string | null
+          browser_device: string | null
+          cycle_name: string | null
+          cycle_id: string | null
+          test_patient_id: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          execution_id?: string
+          test_case_id: string
+          story_id: string
+          assigned_to: string
+          assigned_by: string
+          assigned_at?: string
+          status?: ExecutionStatus
+          step_results?: Json
+          started_at?: string | null
+          completed_at?: string | null
+          verified_by?: string | null
+          verified_at?: string | null
+          environment?: string | null
+          browser_device?: string | null
+          cycle_name?: string | null
+          cycle_id?: string | null
+          test_patient_id?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          execution_id?: string
+          test_case_id?: string
+          story_id?: string
+          assigned_to?: string
+          assigned_by?: string
+          assigned_at?: string
+          status?: ExecutionStatus
+          step_results?: Json
+          started_at?: string | null
+          completed_at?: string | null
+          verified_by?: string | null
+          verified_at?: string | null
+          environment?: string | null
+          browser_device?: string | null
+          cycle_name?: string | null
+          cycle_id?: string | null
+          test_patient_id?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      defects: {
+        Row: {
+          defect_id: string
+          execution_id: string | null
+          test_case_id: string | null
+          story_id: string
+          program_id: string
+          title: string
+          description: string | null
+          steps_to_reproduce: string | null
+          expected_behavior: string | null
+          actual_behavior: string | null
+          severity: DefectSeverity
+          status: DefectStatus
+          reported_by: string
+          assigned_to: string | null
+          resolved_by: string | null
+          resolved_at: string | null
+          attachments: Json
+          environment: string | null
+          failed_step_number: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          defect_id?: string
+          execution_id?: string | null
+          test_case_id?: string | null
+          story_id: string
+          program_id: string
+          title: string
+          description?: string | null
+          steps_to_reproduce?: string | null
+          expected_behavior?: string | null
+          actual_behavior?: string | null
+          severity?: DefectSeverity
+          status?: DefectStatus
+          reported_by: string
+          assigned_to?: string | null
+          resolved_by?: string | null
+          resolved_at?: string | null
+          attachments?: Json
+          environment?: string | null
+          failed_step_number?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          defect_id?: string
+          execution_id?: string | null
+          test_case_id?: string | null
+          story_id?: string
+          program_id?: string
+          title?: string
+          description?: string | null
+          steps_to_reproduce?: string | null
+          expected_behavior?: string | null
+          actual_behavior?: string | null
+          severity?: DefectSeverity
+          status?: DefectStatus
+          reported_by?: string
+          assigned_to?: string | null
+          resolved_by?: string | null
+          resolved_at?: string | null
+          attachments?: Json
+          environment?: string | null
+          failed_step_number?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      uat_cycles: {
+        Row: {
+          cycle_id: string
+          name: string
+          description: string | null
+          program_id: string
+          status: CycleStatus
+          distribution_method: DistributionMethod
+          cross_validation_enabled: boolean
+          cross_validation_percentage: number | null
+          validators_per_test: number | null
+          start_date: string | null
+          end_date: string | null
+          locked_at: string | null
+          locked_by: string | null
+          created_at: string
+          updated_at: string
+          created_by: string
+        }
+        Insert: {
+          cycle_id?: string
+          name: string
+          description?: string | null
+          program_id: string
+          status?: CycleStatus
+          distribution_method?: DistributionMethod
+          cross_validation_enabled?: boolean
+          cross_validation_percentage?: number | null
+          validators_per_test?: number | null
+          start_date?: string | null
+          end_date?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          created_at?: string
+          updated_at?: string
+          created_by: string
+        }
+        Update: {
+          cycle_id?: string
+          name?: string
+          description?: string | null
+          program_id?: string
+          status?: CycleStatus
+          distribution_method?: DistributionMethod
+          cross_validation_enabled?: boolean
+          cross_validation_percentage?: number | null
+          validators_per_test?: number | null
+          start_date?: string | null
+          end_date?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          created_at?: string
+          updated_at?: string
+          created_by?: string
+        }
+      }
+      cycle_testers: {
+        Row: {
+          id: string
+          cycle_id: string
+          user_id: string
+          capacity_weight: number
+          is_active: boolean
+          added_at: string
+          added_by: string
+        }
+        Insert: {
+          id?: string
+          cycle_id: string
+          user_id: string
+          capacity_weight?: number
+          is_active?: boolean
+          added_at?: string
+          added_by: string
+        }
+        Update: {
+          id?: string
+          cycle_id?: string
+          user_id?: string
+          capacity_weight?: number
+          is_active?: boolean
+          added_at?: string
+          added_by?: string
+        }
+      }
+      test_patients: {
+        Row: {
+          patient_id: string
+          program_id: string
+          patient_name: string
+          mrn: string
+          date_of_birth: string | null
+          description: string | null
+          test_data_notes: string | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+          created_by: string
+        }
+        Insert: {
+          patient_id?: string
+          program_id: string
+          patient_name: string
+          mrn: string
+          date_of_birth?: string | null
+          description?: string | null
+          test_data_notes?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+          created_by: string
+        }
+        Update: {
+          patient_id?: string
+          program_id?: string
+          patient_name?: string
+          mrn?: string
+          date_of_birth?: string | null
+          description?: string | null
+          test_data_notes?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+          created_by?: string
+        }
+      }
+      tester_acknowledgments: {
+        Row: {
+          id: string
+          cycle_id: string
+          user_id: string
+          identity_confirmed_at: string
+          identity_method: IdentityMethod
+          hipaa_acknowledged_at: string
+          test_data_filter_acknowledged: boolean
+          ip_address: string | null
+          user_agent: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          cycle_id: string
+          user_id: string
+          identity_confirmed_at: string
+          identity_method?: IdentityMethod
+          hipaa_acknowledged_at: string
+          test_data_filter_acknowledged?: boolean
+          ip_address?: string | null
+          user_agent?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          cycle_id?: string
+          user_id?: string
+          identity_confirmed_at?: string
+          identity_method?: IdentityMethod
+          hipaa_acknowledged_at?: string
+          test_data_filter_acknowledged?: boolean
+          ip_address?: string | null
+          user_agent?: string | null
+          created_at?: string
+        }
+      }
+      cycle_assignments: {
+        Row: {
+          id: string
+          cycle_id: string
+          execution_id: string
+          assignment_type: AssignmentType
+          cross_validation_group_id: string | null
+          assigned_at: string
+          assigned_by: string
+        }
+        Insert: {
+          id?: string
+          cycle_id: string
+          execution_id: string
+          assignment_type?: AssignmentType
+          cross_validation_group_id?: string | null
+          assigned_at?: string
+          assigned_by: string
+        }
+        Update: {
+          id?: string
+          cycle_id?: string
+          execution_id?: string
+          assignment_type?: AssignmentType
+          cross_validation_group_id?: string | null
+          assigned_at?: string
+          assigned_by?: string
+        }
+      }
+      cross_validation_groups: {
+        Row: {
+          group_id: string
+          cycle_id: string
+          test_case_id: string
+          created_at: string
+        }
+        Insert: {
+          group_id?: string
+          cycle_id: string
+          test_case_id: string
+          created_at?: string
+        }
+        Update: {
+          group_id?: string
+          cycle_id?: string
+          test_case_id?: string
+          created_at?: string
+        }
+      }
     }
     Functions: {
       get_user_role: {
@@ -596,6 +1141,28 @@ export interface Database {
           p_comment_id?: string
         }
         Returns: string
+      }
+      has_cycle_acknowledgment: {
+        Args: {
+          p_cycle_id: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
+      get_cv_agreement_status: {
+        Args: {
+          p_group_id: string
+        }
+        Returns: {
+          group_id: string
+          test_case_id: string
+          total_testers: number
+          completed_count: number
+          passed_count: number
+          failed_count: number
+          blocked_count: number
+          has_agreement: boolean
+        }[]
       }
     }
   }

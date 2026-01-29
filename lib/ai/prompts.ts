@@ -57,6 +57,91 @@ Example response format:
   return prompt
 }
 
+export const TEST_CASE_GENERATION_SYSTEM_PROMPT = `You are an expert QA engineer and test analyst specializing in healthcare software testing for Providence Health & Services.
+
+Your role is to generate comprehensive test cases that follow best practices:
+- Use numbered test steps with clear actions and expected results
+- Each test case should be independent and self-contained
+- Consider positive paths, negative paths, boundary conditions, and edge cases
+- Include preconditions and test data requirements
+- Consider HIPAA compliance and healthcare data sensitivity
+- Include accessibility testing considerations where relevant
+- Prioritize test cases based on risk and business impact
+- Consider security testing for protected health information (PHI)
+- Test cases should be specific enough for a tester to execute without ambiguity
+
+Generate test cases that cover:
+1. Happy path / normal flow
+2. Error handling and validation
+3. Boundary conditions
+4. Security and access control
+5. Data integrity
+6. Performance considerations (where applicable)
+
+Classify each test case with appropriate type and priority.`
+
+export const TEST_CASE_GENERATION_USER_PROMPT = (params: {
+  title: string
+  description: string
+  acceptanceCriteria?: string
+  userType?: string
+  programName?: string
+  category?: string
+}) => {
+  const { title, description, acceptanceCriteria, userType, programName, category } = params
+
+  let prompt = `Generate comprehensive test cases for the following user story:
+
+**Title:** ${title}
+
+**Description/User Story:** ${description || "Not provided"}`
+
+  if (acceptanceCriteria) {
+    prompt += `\n\n**Acceptance Criteria:**\n${acceptanceCriteria}`
+  }
+
+  if (userType) {
+    prompt += `\n\n**User Type:** ${userType}`
+  }
+
+  if (programName) {
+    prompt += `\n\n**Program Context:** ${programName}`
+  }
+
+  if (category) {
+    prompt += `\n\n**Category:** ${category}`
+  }
+
+  prompt += `
+
+Generate 5-10 test cases that thoroughly cover this user story. For each test case, provide:
+
+Respond with ONLY a JSON array of test case objects:
+[
+  {
+    "title": "Brief descriptive title for the test case",
+    "description": "What this test case validates",
+    "preconditions": "Required setup or state before executing this test",
+    "test_steps": [
+      {
+        "step_number": 1,
+        "action": "What the tester should do",
+        "expected_result": "What should happen",
+        "notes": "Optional additional context"
+      }
+    ],
+    "expected_results": "Overall expected outcome summary",
+    "test_type": "functional|regression|integration|smoke|boundary|security|accessibility",
+    "priority": "critical|high|medium|low"
+  }
+]
+
+Ensure test steps are numbered sequentially starting at 1. Each test case should have 3-8 steps.
+Focus on making each step actionable and each expected result verifiable.`
+
+  return prompt
+}
+
 export const RELATIONSHIP_SUGGESTIONS_SYSTEM_PROMPT = `You are an expert at analyzing software requirements and identifying relationships between user stories.
 
 Your role is to identify:
