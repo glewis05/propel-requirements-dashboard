@@ -112,8 +112,8 @@ The dashboard uses Propel Health brand styling with "Powered by Propel Health Pl
 
 **Key Branding Locations:**
 - Login page: Navy background, gold accents
-- Sidebar: Navy background, gold logo icon
-- Mobile nav: Navy background, gold logo icon
+- Sidebar: Navy background, gold logo icon, gold left border on active nav item
+- Mobile nav: Navy background, gold logo icon, gold left border on active nav item
 - Footer tagline: "Powered by Propel Health Platform"
 
 ## Multi-Client Considerations
@@ -126,21 +126,21 @@ Future requirement to support multiple clients (e.g., Providence, Kaiser):
 - Design database schema with client isolation in mind
 
 ## Current Phase
-Phase 6: Reporting & Traceability ✅ COMPLETE (Jan 27, 2026)
-- [x] Requirements table schema update ✅
-- [x] Requirement-story mapping table ✅
-- [x] Traceability matrix report page ✅
-- [x] Program summary report page ✅
-- [x] Coverage report page ✅
-- [x] Approval history report page ✅
-- [x] CSV export for all reports ✅
-- [ ] PDF export (deferred)
-- [ ] Excel export (deferred)
-- [ ] Scheduled reports (deferred)
+Phase 8: UX Improvements ✅ COMPLETE (Jan 28, 2026)
+- [x] Grouped sidebar navigation (Core / Workflow / Admin) ✅
+- [x] Gold left border indicator on active nav items ✅
+- [x] Fixed duplicate heading bug in header ✅
+- [x] Active filter chips with individual dismiss ✅
+- [x] Enhanced search placeholder text ✅
+- [x] More prominent New Story button ✅
+- [x] Enhanced empty states with icons and CTA buttons ✅
+- [x] Accessible badge icons on status/priority badges ✅
+- [x] Shared navigation config (lib/navigation.ts) ✅
+- [x] Shared badge config (lib/badge-config.ts) ✅
+- [x] UAT nav entry added (was missing from mobile nav) ✅
 
 **Upcoming Phases:**
-- Phase 7: AI Features (Relationship Suggestions, Risk Advisor)
-- Phase 8: Polish & Launch
+- Phase 9: Polish & Launch
 
 **Completed:**
 - Phase 1 - Foundation & Authentication ✅
@@ -180,6 +180,17 @@ Phase 6: Reporting & Traceability ✅ COMPLETE (Jan 27, 2026)
   - Approval history audit trail report
   - CSV export for all reports
   - Database views: traceability_matrix, requirement_coverage_summary, story_coverage
+- Phase 7 - AI Features ✅ (Jan 27, 2026)
+  - AI relationship suggestions using Claude API
+  - AI acceptance criteria generation
+- Phase 8 - UX Improvements ✅ (Jan 28, 2026)
+  - Grouped sidebar navigation with section labels
+  - Active nav gold border indicator
+  - Duplicate header heading fix (accessibility)
+  - Active filter chips with individual dismiss
+  - Enhanced search placeholder and empty states
+  - Accessible status/priority badge icons
+  - Shared navigation and badge config modules
 
 ## Story Relationships (Database Fields)
 - `parent_story_id` TEXT - References parent story for hierarchy (one level)
@@ -194,8 +205,12 @@ Phase 6: Reporting & Traceability ✅ COMPLETE (Jan 27, 2026)
 
 ## Key Components
 
+### Shared Config Modules
+- `lib/navigation.ts` - Grouped navigation config (Core / Workflow / Admin) with `getFilteredGroups(userRole)` helper. Single source of truth for sidebar and mobile nav.
+- `lib/badge-config.ts` - Status and priority badge config with lucide icons and color classes. Exports `getStatusBadge()` and `getPriorityBadge()` helpers.
+
 ### Stories
-- `components/stories/stories-list.tsx` - Client component with filtering, search, mobile card view, and virtual scrolling (50+ items)
+- `components/stories/stories-list.tsx` - Client component with filtering, search, filter chips, mobile card view, virtual scrolling (50+ items), badge icons, enhanced empty states
 - `components/stories/stories-list-realtime.tsx` - Wrapper that adds real-time subscriptions to StoriesList
 - `components/stories/collapsible-section.tsx` - Reusable expand/collapse section with icon, badge support
 - `components/stories/comments-section.tsx` - Threaded comments with @mentions, real-time updates, replies up to 3 levels deep
@@ -227,9 +242,17 @@ Phase 6: Reporting & Traceability ✅ COMPLETE (Jan 27, 2026)
 - `components/ui/loading-spinner.tsx` - Loading spinner with sizes (sm, md, lg) and LoadingPage component
 
 ### Layout
-- `components/layout/sidebar.tsx` - Role-based navigation (desktop)
-- `components/layout/header.tsx` - User menu, notifications, mobile menu trigger
-- `components/layout/mobile-nav.tsx` - Slide-out drawer navigation for mobile/tablet
+- `components/layout/sidebar.tsx` - Role-based grouped navigation (desktop) with gold active indicator
+- `components/layout/header.tsx` - User menu, notifications, mobile menu trigger (uses `<p aria-hidden>` instead of `<h1>` to avoid duplicate headings)
+- `components/layout/mobile-nav.tsx` - Slide-out drawer navigation for mobile/tablet with grouped nav
+
+## Sidebar Navigation Groups
+Navigation items are grouped into three sections, defined in `lib/navigation.ts`:
+- **Core:** Dashboard, User Stories, Activity
+- **Workflow:** Questions, UAT, Approvals
+- **Admin:** Reports, Users, Settings, Notifications
+
+Items are filtered by user role. Active items display a gold (`border-propel-gold`) left border.
 
 ## User Setup (Important)
 

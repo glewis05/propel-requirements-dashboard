@@ -5,18 +5,8 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import type { UserRole } from "@/types/database"
-import {
-  LayoutDashboard,
-  FileText,
-  CheckCircle,
-  Users,
-  Settings,
-  BarChart3,
-  Bell,
-  X,
-  Activity,
-  HelpCircle,
-} from "lucide-react"
+import { X } from "lucide-react"
+import { getFilteredGroups } from "@/lib/navigation"
 
 interface MobileNavProps {
   isOpen: boolean
@@ -25,69 +15,10 @@ interface MobileNavProps {
   userName?: string
 }
 
-const navigation = [
-  {
-    name: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-    roles: ["Portfolio Manager", "Program Manager", "Developer", "Admin"],
-  },
-  {
-    name: "User Stories",
-    href: "/stories",
-    icon: FileText,
-    roles: ["Portfolio Manager", "Program Manager", "Developer", "Admin"],
-  },
-  {
-    name: "Activity",
-    href: "/activity",
-    icon: Activity,
-    roles: ["Portfolio Manager", "Program Manager", "Developer", "Admin"],
-  },
-  {
-    name: "Questions",
-    href: "/questions",
-    icon: HelpCircle,
-    roles: ["Portfolio Manager", "Program Manager", "Developer", "Admin"],
-  },
-  {
-    name: "Approvals",
-    href: "/approvals",
-    icon: CheckCircle,
-    roles: ["Portfolio Manager", "Program Manager", "Admin"],
-  },
-  {
-    name: "Reports",
-    href: "/reports",
-    icon: BarChart3,
-    roles: ["Portfolio Manager", "Program Manager", "Admin"],
-  },
-  {
-    name: "Users",
-    href: "/admin/users",
-    icon: Users,
-    roles: ["Admin"],
-  },
-  {
-    name: "Settings",
-    href: "/admin/settings",
-    icon: Settings,
-    roles: ["Admin"],
-  },
-  {
-    name: "Notifications",
-    href: "/settings/notifications",
-    icon: Bell,
-    roles: ["Portfolio Manager", "Program Manager", "Developer", "Admin"],
-  },
-]
-
 export function MobileNav({ isOpen, onClose, userRole, userName }: MobileNavProps) {
   const pathname = usePathname()
 
-  const filteredNavigation = navigation.filter(
-    (item) => userRole && item.roles.includes(userRole)
-  )
+  const groups = getFilteredGroups(userRole)
 
   // Close nav when route changes
   useEffect(() => {
@@ -170,32 +101,41 @@ export function MobileNav({ isOpen, onClose, userRole, userName }: MobileNavProp
 
           {/* Navigation */}
           <nav className="flex-1 overflow-y-auto px-4 py-4">
-            <ul className="space-y-1">
-              {filteredNavigation.map((item) => {
-                const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
-                return (
-                  <li key={item.name}>
-                    <Link
-                      href={item.href}
-                      className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors",
-                        isActive
-                          ? "bg-primary text-primary-foreground"
-                          : "text-white/70 hover:bg-white/10 hover:text-white"
-                      )}
-                    >
-                      <item.icon
-                        className={cn(
-                          "h-5 w-5 shrink-0",
-                          isActive ? "text-primary-foreground" : "text-white/50"
-                        )}
-                      />
-                      {item.name}
-                    </Link>
-                  </li>
-                )
-              })}
-            </ul>
+            <div className="flex flex-col gap-y-6">
+              {groups.map((group) => (
+                <div key={group.label}>
+                  <p className="text-[10px] uppercase tracking-wider text-white/40 px-3 mb-2">
+                    {group.label}
+                  </p>
+                  <ul className="space-y-1">
+                    {group.items.map((item) => {
+                      const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
+                      return (
+                        <li key={item.name}>
+                          <Link
+                            href={item.href}
+                            className={cn(
+                              "flex items-center gap-3 rounded-lg text-sm font-medium transition-colors",
+                              isActive
+                                ? "border-l-[3px] border-propel-gold bg-primary text-primary-foreground pl-[9px] pr-3 py-3"
+                                : "text-white/70 hover:bg-white/10 hover:text-white px-3 py-3"
+                            )}
+                          >
+                            <item.icon
+                              className={cn(
+                                "h-5 w-5 shrink-0",
+                                isActive ? "text-primary-foreground" : "text-white/50"
+                              )}
+                            />
+                            {item.name}
+                          </Link>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+              ))}
+            </div>
           </nav>
 
           {/* Footer with user info */}

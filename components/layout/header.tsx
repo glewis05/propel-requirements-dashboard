@@ -62,10 +62,10 @@ export function Header({ user, profile }: HeaderProps) {
       <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
         {/* Title - shorter on mobile */}
         <div className="flex flex-1 items-center">
-          <h1 className="text-lg font-semibold text-foreground">
+          <p aria-hidden="true" className="text-lg font-semibold text-foreground">
             <span className="sm:hidden">Requirements</span>
             <span className="hidden sm:inline">Requirements Dashboard</span>
-          </h1>
+          </p>
         </div>
 
         {/* Right side items */}

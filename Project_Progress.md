@@ -1,7 +1,7 @@
 # Requirements Dashboard - Development Status
 
-**Last Updated:** January 27, 2026
-**Session:** Phase 6 Complete - Reporting & Traceability
+**Last Updated:** January 28, 2026
+**Session:** Phase 8 Complete - UX Improvements
 
 ---
 
@@ -72,7 +72,7 @@ propel-requirements-dashboard/
 │   └── (dashboard)/
 │       ├── layout.tsx           # Sidebar + header layout
 │       ├── dashboard/
-│       │   ├── page.tsx         # Stats overview
+│       │   ├── page.tsx         # Stats overview (badge icons)
 │       │   ├── loading.tsx      # Dashboard loading skeleton
 │       │   └── error.tsx        # Dashboard error boundary
 │       ├── stories/
@@ -85,10 +85,11 @@ propel-requirements-dashboard/
 │       ├── reports/page.tsx     # Reports placeholder
 │       └── admin/users/page.tsx # User management
 ├── components/layout/
-│   ├── sidebar.tsx              # Role-based navigation
-│   └── header.tsx               # User menu, notifications
+│   ├── sidebar.tsx              # Role-based grouped navigation
+│   ├── header.tsx               # User menu, notifications
+│   └── mobile-nav.tsx           # Grouped mobile navigation drawer
 ├── components/stories/
-│   ├── stories-list.tsx         # Client-side filtering & search
+│   ├── stories-list.tsx         # Filtering, search, filter chips, badge icons, empty states
 │   ├── stories-list-realtime.tsx # Real-time wrapper for stories list
 │   ├── collapsible-section.tsx  # Reusable expand/collapse component
 │   └── comments-section.tsx     # Real-time comments section
@@ -100,6 +101,8 @@ propel-requirements-dashboard/
 │   ├── use-stories-subscription.ts   # Stories list subscription
 │   └── use-comments-subscription.ts  # Comments subscription
 ├── lib/
+│   ├── navigation.ts            # Grouped nav config (Core/Workflow/Admin)
+│   ├── badge-config.ts          # Status/priority badge icons + colors
 │   ├── supabase/
 │   │   ├── client.ts            # Browser client
 │   │   ├── server.ts            # Server client
@@ -121,7 +124,7 @@ propel-requirements-dashboard/
 - Auth callback handler updates `last_login_at`
 - Login page with Propel branding
 
-### 4. Propel Health Branding ✅ (Updated Jan 26, 2026)
+### 4. Propel Health Branding ✅ (Updated Jan 28, 2026)
 
 **Colors configured in Tailwind:**
 - Primary: Propel Teal (#0C8181)
@@ -142,15 +145,15 @@ propel-requirements-dashboard/
 
 **Branding Applied To:**
 - Login page (navy background, gold accents)
-- Sidebar navigation (navy background, gold logo icon)
-- Mobile navigation drawer (navy background, gold logo icon)
+- Sidebar navigation (navy background, gold logo icon, gold active border)
+- Mobile navigation drawer (navy background, gold logo icon, gold active border)
 - "Powered by Propel Health Platform" tagline in sidebar and login
 
 **Files Updated:**
 - `tailwind.config.ts` - Propel color palette and Montserrat font
 - `app/globals.css` - Google Fonts import, CSS variables
-- `components/layout/sidebar.tsx` - Navy background, gold accents, PHP tagline
-- `components/layout/mobile-nav.tsx` - Navy background, gold accents, PHP tagline
+- `components/layout/sidebar.tsx` - Navy background, gold accents, grouped nav, gold active border
+- `components/layout/mobile-nav.tsx` - Navy background, gold accents, grouped nav, gold active border
 - `app/(auth)/login/page.tsx` - Navy background, gold accents, PHP tagline
 
 ### 5. Loading States & Error Boundaries ✅ (Jan 25, 2026)
@@ -256,6 +259,50 @@ Enable Realtime on tables in Dashboard > Database > Replication:
 - User Stories page with filters (Program, Status, Priority) ✅
 - Protected routes redirect unauthenticated users to login ✅
 
+### 10. Phase 8: UX Improvements ✅ (Jan 28, 2026)
+
+**Bug Fixes:**
+1. **Duplicate heading "RequirementsRequirements Dashboard"** - Changed `<h1>` to `<p aria-hidden="true">` in `header.tsx`. Each page already has its own `<h1>`, so the header element was creating a duplicate that screen readers would read twice.
+2. **Missing UAT nav entry in mobile navigation** - Mobile nav was missing the UAT entry that sidebar had. Fixed by extracting shared navigation config.
+
+**New Shared Modules:**
+- `lib/navigation.ts` - Centralized navigation config with 3 groups (Core, Workflow, Admin) and `getFilteredGroups(userRole)` helper. Replaces duplicate nav arrays in sidebar and mobile-nav.
+- `lib/badge-config.ts` - Status and priority badge config mapping each value to a lucide icon + color class. Exports `getStatusBadge()` and `getPriorityBadge()` helpers. Icons: FileEdit (Draft), Eye (Internal Review), Clock (Pending Client Review), CheckCircle (Approved), AlertTriangle (Needs Discussion), Ban (Out of Scope), Code (In Development), ClipboardCheck (In UAT), AlertTriangle (Must Have), Clock (Should Have), CircleDot (Could Have), Ban (Won't Have).
+
+**Sidebar & Mobile Nav Updates:**
+- Both components now import from shared `lib/navigation.ts`
+- Navigation items grouped into labeled sections: Core, Workflow, Admin
+- Section labels styled as `text-[10px] uppercase tracking-wider text-white/40`
+- Active nav items show `border-l-[3px] border-propel-gold` gold left border with padding compensation
+- UAT entry added to Workflow group (was missing from mobile nav)
+
+**Stories List Updates (`stories-list.tsx`):**
+- Search placeholder changed to "Search by title, ID, or description..."
+- Active filter chips: teal pill badges showing each active filter (Search, Program, Status, Priority) with individual X dismiss buttons
+- "Clear all filters" button now includes an X icon
+- Enhanced empty states:
+  - **No filter results:** Search icon, "No matching stories" heading, "Try adjusting..." subtext, "Clear all filters" CTA button
+  - **No data:** FileText icon, "No stories yet" heading, "Create your first..." subtext, "New Story" CTA link
+- Status/priority badges now include small `h-3 w-3` lucide icons via `StatusBadge` and `PriorityBadge` components (used in StoryCard, StoryTableRow, and virtual scroll rows)
+
+**Stories Page Updates (`stories/page.tsx`):**
+- "New Story" button: `font-medium` → `font-semibold`, `py-2` → `py-2.5`, added `shadow-sm`
+
+**Dashboard Page Updates (`dashboard/page.tsx`):**
+- Recent stories list badges now use `StatusBadgeIcon` and `PriorityBadgeIcon` components with lucide icons, replacing inline color logic
+
+**Files Modified:**
+| File | Changes |
+|------|---------|
+| `lib/navigation.ts` **(NEW)** | Shared nav config with 3 groups and role filtering |
+| `lib/badge-config.ts` **(NEW)** | Shared badge config with icon + color per status/priority |
+| `components/layout/sidebar.tsx` | Uses shared nav, grouped sections, gold active border |
+| `components/layout/mobile-nav.tsx` | Uses shared nav, grouped sections, gold active border, fixes missing UAT |
+| `components/layout/header.tsx` | `<h1>` → `<p aria-hidden="true">` to fix duplicate heading |
+| `components/stories/stories-list.tsx` | Filter chips, search placeholder, empty states, badge icons |
+| `app/(dashboard)/stories/page.tsx` | More prominent New Story button |
+| `app/(dashboard)/dashboard/page.tsx` | Badge icons on recent stories list |
+
 ---
 
 ## Current State
@@ -263,15 +310,16 @@ Enable Realtime on tables in Dashboard > Database > Replication:
 ### What's Working
 - **Authentication:** Magic link login fully functional
 - **Role-Based Access:** Admin role recognized and displayed correctly
-- **Dashboard:** Shows Total Stories, Approved Stories, Pending Stories, Needs Discussion stats
-- **User Stories:** Table view with filters for Program, Status, Priority
+- **Dashboard:** Shows Total Stories, Approved Stories, Pending Stories, Needs Discussion stats with badge icons
+- **User Stories:** Table view with filters for Program, Status, Priority; active filter chips; enhanced empty states
 - **Story CRUD:** Create, Read, Update, Delete all working with proper RLS
 - **Story Statuses:** Draft, Internal Review, Pending Client Review, Approved, In Development, In UAT, Needs Discussion, Out of Scope
 - **Delete Protection:** Client-approved stories in Approved/In Development/In UAT cannot be deleted
 - **Version History:** Automatic versioning via AFTER trigger
-- **Navigation:** Sidebar with Dashboard, User Stories, role-based menu items
+- **Navigation:** Grouped sidebar (Core/Workflow/Admin) with gold active indicator, mobile drawer with same groups
 - **Session Management:** Middleware refreshes sessions and protects routes
 - **RLS Policies:** Full CRUD policies for user_stories with program-based access control
+- **Accessibility:** Badge icons supplement color for status/priority, single `<h1>` per page
 
 ### Logged In User
 - **Email:** glenlewis05@gmail.com
@@ -474,24 +522,36 @@ Enable Realtime on tables in Dashboard > Database > Replication:
 **Server Actions:**
 - `app/(dashboard)/reports/actions.ts` - Report data fetching functions
 
-### Phase 7: AI Features
-**AI Relationship Suggestions**
-- [ ] AI analyzes new stories for similarities
-- [ ] Suggests: "Similar to [X] - link them?"
-- [ ] Suggests: "Child of [Y] - nest it?"
-- [ ] Accept/reject/dismiss UI
-- [ ] Confidence scores displayed
-- [ ] API endpoint: POST /api/ai/suggest-relationships
+### Phase 7: AI Features ✅ COMPLETE (Jan 27, 2026)
+- [x] AI relationship suggestions using Claude API ✅
+- [x] AI acceptance criteria generation ✅
 
-**AI Risk Advisor** (Full design in `docs/AI_Risk_Advisor_Design.md`)
-- [ ] Goals Management - Define program goals for alignment tracking
-- [ ] AI-Powered Risk Analysis - Claude API analyzes stories
-- [ ] Risk Scoring Matrix - Likelihood × Impact (1-25 scale)
-- [ ] Conversational Interface - Ask follow-up questions
-- [ ] Goal Alignment Detection - How stories support/conflict with goals
-- [ ] Risk Dashboard - Portfolio-level risk visualization
+### Phase 8: UX Improvements ✅ COMPLETE (Jan 28, 2026)
+- [x] Grouped sidebar navigation (Core / Workflow / Admin) ✅
+- [x] Gold left border indicator on active nav items ✅
+- [x] Fixed duplicate heading bug in header ✅
+- [x] Active filter chips with individual dismiss ✅
+- [x] Enhanced search placeholder text ✅
+- [x] More prominent New Story button ✅
+- [x] Enhanced empty states with icons and CTA buttons ✅
+- [x] Accessible badge icons on status/priority badges ✅
+- [x] Shared navigation config (lib/navigation.ts) ✅
+- [x] Shared badge config (lib/badge-config.ts) ✅
+- [x] UAT nav entry added (was missing from mobile nav) ✅
 
-### Phase 8: Polish & Launch
+**New Shared Modules:**
+- `lib/navigation.ts` - Grouped nav config with role filtering
+- `lib/badge-config.ts` - Badge icon + color config per status/priority
+
+**Files Modified:**
+- `components/layout/sidebar.tsx` - Grouped nav, gold active border
+- `components/layout/mobile-nav.tsx` - Grouped nav, gold active border, UAT fix
+- `components/layout/header.tsx` - Duplicate heading fix
+- `components/stories/stories-list.tsx` - Filter chips, search UX, empty states, badge icons
+- `app/(dashboard)/stories/page.tsx` - Prominent New Story button
+- `app/(dashboard)/dashboard/page.tsx` - Badge icons on recent stories
+
+### Phase 9: Polish & Launch
 - [ ] Comprehensive testing
 - [ ] Performance optimization
 - [ ] Security audit
@@ -801,13 +861,27 @@ For complex schema changes on existing tables:
 
 This allows you to verify step 1 succeeded before running step 2.
 
+### Session: January 28, 2026 (Phase 8 UX Improvements)
+
+**21. Deduplicate Navigation Config**
+Sidebar and mobile nav had independent copies of the navigation array. The mobile nav was missing the UAT entry. Extracting to a shared `lib/navigation.ts` module with `getFilteredGroups(userRole)` eliminates duplication and ensures both navs stay in sync.
+
+**22. Badge Accessibility**
+Status and priority badges using color-only differentiation fail WCAG contrast requirements for some users. Adding small lucide icons (h-3 w-3) inside badges provides a non-color visual signal. The shared `lib/badge-config.ts` maps each status/priority to an icon + color class.
+
+**23. Duplicate Headings in Layouts**
+The header component had an `<h1>` tag for "Requirements Dashboard", but each page also defines its own `<h1>`. Screen readers would announce both headings. Fix: use `<p aria-hidden="true">` for the header text since it's decorative/contextual, not the primary page heading.
+
 ---
 
 ## Next Steps When Resuming
 
-### Phase 7: AI Features (Next)
-1. **AI Relationship Suggestions** - Analyze new stories for similarities, suggest links
-2. **AI Risk Advisor** - See `docs/AI_Risk_Advisor_Design.md` for full design
+### Phase 9: Polish & Launch (Next)
+1. **Comprehensive testing** - End-to-end testing of all features
+2. **Performance optimization** - Lazy loading, code splitting
+3. **Security audit** - RLS review, input sanitization
+4. **Documentation** - User guides, API docs
+5. **Production deployment** - Final Vercel deploy with production env
 
 ### Deferred Items
 - Rich text editor for acceptance criteria (Phase 3)
@@ -828,6 +902,8 @@ This allows you to verify step 1 succeeded before running step 2.
 5. `tailwind.config.ts` - Branding configuration
 6. `middleware.ts` - Route protection logic
 7. `.eslintrc.json` - ESLint configuration
+8. `lib/navigation.ts` - Shared navigation config
+9. `lib/badge-config.ts` - Shared badge icon/color config
 
 ---
 

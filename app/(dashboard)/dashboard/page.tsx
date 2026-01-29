@@ -1,9 +1,34 @@
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { FileText, CheckCircle, Clock, AlertTriangle } from "lucide-react"
+import { getStatusBadge, getPriorityBadge } from "@/lib/badge-config"
 
 // Force dynamic rendering (no caching) so loading state shows
 export const dynamic = 'force-dynamic'
+
+function StatusBadgeIcon({ status, size = "default" }: { status: string; size?: "default" | "sm" }) {
+  const badge = getStatusBadge(status)
+  const Icon = badge.icon
+  const padding = size === "sm" ? "px-2 py-0.5" : "px-2 py-1"
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full ${padding} text-xs font-medium ${badge.className}`}>
+      <Icon className="h-3 w-3" />
+      {status}
+    </span>
+  )
+}
+
+function PriorityBadgeIcon({ priority, size = "default" }: { priority: string; size?: "default" | "sm" }) {
+  const badge = getPriorityBadge(priority)
+  const Icon = badge.icon
+  const padding = size === "sm" ? "px-2 py-0.5" : "px-2 py-1"
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full ${padding} text-xs font-medium ${badge.className}`}>
+      <Icon className="h-3 w-3" />
+      {priority}
+    </span>
+  )
+}
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -119,31 +144,9 @@ export default async function DashboardPage() {
                     <span>{story.program_id}</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                        story.status === "Approved"
-                          ? "bg-success/10 text-success"
-                          : story.status === "Pending Client Review"
-                          ? "bg-warning/10 text-warning"
-                          : story.status === "Needs Discussion"
-                          ? "bg-destructive/10 text-destructive"
-                          : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {story.status}
-                    </span>
+                    <StatusBadgeIcon status={story.status} size="sm" />
                     {story.priority && (
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                          story.priority === "Must Have"
-                            ? "bg-destructive/10 text-destructive"
-                            : story.priority === "Should Have"
-                            ? "bg-warning/10 text-warning"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {story.priority}
-                      </span>
+                      <PriorityBadgeIcon priority={story.priority} size="sm" />
                     )}
                   </div>
                 </div>
@@ -166,31 +169,9 @@ export default async function DashboardPage() {
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0 ml-4">
                     {story.priority && (
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                          story.priority === "Must Have"
-                            ? "bg-destructive/10 text-destructive"
-                            : story.priority === "Should Have"
-                            ? "bg-warning/10 text-warning"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {story.priority}
-                      </span>
+                      <PriorityBadgeIcon priority={story.priority} />
                     )}
-                    <span
-                      className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                        story.status === "Approved"
-                          ? "bg-success/10 text-success"
-                          : story.status === "Pending Client Review"
-                          ? "bg-warning/10 text-warning"
-                          : story.status === "Needs Discussion"
-                          ? "bg-destructive/10 text-destructive"
-                          : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {story.status}
-                    </span>
+                    <StatusBadgeIcon status={story.status} />
                   </div>
                 </div>
               </Link>

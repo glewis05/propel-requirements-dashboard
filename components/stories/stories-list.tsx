@@ -2,8 +2,9 @@
 
 import { useState, useMemo, useRef } from "react"
 import Link from "next/link"
-import { Search, ChevronRight, Calendar, Layers, X } from "lucide-react"
+import { Search, ChevronRight, Calendar, Layers, X, FileText, Plus } from "lucide-react"
 import { useVirtualizer } from "@tanstack/react-virtual"
+import { getStatusBadge, getPriorityBadge } from "@/lib/badge-config"
 
 interface Story {
   story_id: string
@@ -34,33 +35,30 @@ const VIRTUAL_SCROLL_THRESHOLD = 50
 const TABLE_ROW_HEIGHT = 73 // px
 const CARD_HEIGHT = 140 // px
 
-// Helper functions for badge colors
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "Approved":
-      return "bg-success/10 text-success"
-    case "Pending Client Review":
-      return "bg-warning/10 text-warning"
-    case "Needs Discussion":
-      return "bg-destructive/10 text-destructive"
-    case "Internal Review":
-      return "bg-primary/10 text-primary"
-    default:
-      return "bg-muted text-muted-foreground"
-  }
+// Status badge component with icon
+function StatusBadge({ status, size = "default" }: { status: string; size?: "default" | "sm" }) {
+  const badge = getStatusBadge(status)
+  const Icon = badge.icon
+  const padding = size === "sm" ? "px-2 py-0.5" : "px-2 py-1"
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full ${padding} text-xs font-medium ${badge.className}`}>
+      <Icon className="h-3 w-3" />
+      {status}
+    </span>
+  )
 }
 
-const getPriorityColor = (priority: string) => {
-  switch (priority) {
-    case "Must Have":
-      return "bg-destructive/10 text-destructive"
-    case "Should Have":
-      return "bg-warning/10 text-warning"
-    case "Could Have":
-      return "bg-primary/10 text-primary"
-    default:
-      return "bg-muted text-muted-foreground"
-  }
+// Priority badge component with icon
+function PriorityBadge({ priority, size = "default" }: { priority: string; size?: "default" | "sm" }) {
+  const badge = getPriorityBadge(priority)
+  const Icon = badge.icon
+  const padding = size === "sm" ? "px-2 py-0.5" : "px-2 py-1"
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full ${padding} text-xs font-medium ${badge.className}`}>
+      <Icon className="h-3 w-3" />
+      {priority}
+    </span>
+  )
 }
 
 // Mobile Card Component
@@ -84,13 +82,9 @@ function StoryCard({ story, programs }: { story: Story; programs: Program[] }) {
 
       {/* Badges */}
       <div className="flex flex-wrap gap-2 mt-3">
-        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${getStatusColor(story.status)}`}>
-          {story.status}
-        </span>
+        <StatusBadge status={story.status} size="sm" />
         {story.priority && (
-          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${getPriorityColor(story.priority)}`}>
-            {story.priority}
-          </span>
+          <PriorityBadge priority={story.priority} size="sm" />
         )}
       </div>
 
@@ -130,19 +124,15 @@ function StoryTableRow({ story, programs }: { story: Story; programs: Program[] 
       </td>
       <td className="px-6 py-4">
         {story.priority && (
-          <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${getPriorityColor(story.priority)}`}>
-            {story.priority}
-          </span>
+          <PriorityBadge priority={story.priority} />
         )}
       </td>
       <td className="px-6 py-4">
-        <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(story.status)}`}>
-          {story.status}
-        </span>
+        <StatusBadge status={story.status} />
       </td>
       <td className="px-6 py-4">
         <span className="text-sm text-muted-foreground">
-          {story.roadmap_target || "—"}
+          {story.roadmap_target || "\u2014"}
         </span>
       </td>
       <td className="px-6 py-4">
@@ -151,6 +141,45 @@ function StoryTableRow({ story, programs }: { story: Story; programs: Program[] 
         </span>
       </td>
     </tr>
+  )
+}
+
+// Empty state component
+function EmptyState({ hasActiveFilters, onClearFilters }: { hasActiveFilters: boolean; onClearFilters: () => void }) {
+  if (hasActiveFilters) {
+    return (
+      <div className="flex flex-col items-center py-12 px-6">
+        <Search className="h-12 w-12 text-muted-foreground/50" />
+        <h3 className="mt-4 text-sm font-medium text-foreground">No matching stories</h3>
+        <p className="mt-1 text-sm text-muted-foreground text-center">
+          Try adjusting your filters or search criteria.
+        </p>
+        <button
+          onClick={onClearFilters}
+          className="mt-4 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+        >
+          <X className="h-4 w-4" />
+          Clear all filters
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col items-center py-12 px-6">
+      <FileText className="h-12 w-12 text-muted-foreground/50" />
+      <h3 className="mt-4 text-sm font-medium text-foreground">No stories yet</h3>
+      <p className="mt-1 text-sm text-muted-foreground text-center">
+        Create your first user story to get started.
+      </p>
+      <Link
+        href="/stories/new"
+        className="mt-4 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+      >
+        <Plus className="h-4 w-4" />
+        New Story
+      </Link>
+    </div>
   )
 }
 
@@ -228,6 +257,38 @@ export function StoriesList({ stories, programs }: StoriesListProps) {
   const hasActiveFilters =
     searchQuery || programFilter || statusFilter || priorityFilter
 
+  // Build active filter chips
+  const activeFilterChips: { label: string; value: string; onClear: () => void }[] = []
+  if (searchQuery) {
+    activeFilterChips.push({
+      label: "Search",
+      value: searchQuery,
+      onClear: () => setSearchQuery(""),
+    })
+  }
+  if (programFilter) {
+    const programName = programs.find((p) => p.program_id === programFilter)?.name || programFilter
+    activeFilterChips.push({
+      label: "Program",
+      value: programName,
+      onClear: () => setProgramFilter(""),
+    })
+  }
+  if (statusFilter) {
+    activeFilterChips.push({
+      label: "Status",
+      value: statusFilter,
+      onClear: () => setStatusFilter(""),
+    })
+  }
+  if (priorityFilter) {
+    activeFilterChips.push({
+      label: "Priority",
+      value: priorityFilter,
+      onClear: () => setPriorityFilter(""),
+    })
+  }
+
   return (
     <div className="space-y-4">
       {/* Filters */}
@@ -236,7 +297,7 @@ export function StoriesList({ stories, programs }: StoriesListProps) {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search stories..."
+            placeholder="Search by title, ID, or description..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-10 py-2 rounded-md border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
@@ -301,12 +362,35 @@ export function StoriesList({ stories, programs }: StoriesListProps) {
         {hasActiveFilters && (
           <button
             onClick={clearFilters}
-            className="text-primary hover:text-primary/80 font-medium"
+            className="inline-flex items-center gap-1 text-primary hover:text-primary/80 font-medium"
           >
-            Clear filters
+            <X className="h-3.5 w-3.5" />
+            Clear all filters
           </button>
         )}
       </div>
+
+      {/* Active filter chips */}
+      {activeFilterChips.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {activeFilterChips.map((chip) => (
+            <span
+              key={chip.label}
+              className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-medium"
+            >
+              <span className="text-primary/70">{chip.label}:</span>
+              <span className="max-w-[120px] truncate">{chip.value}</span>
+              <button
+                onClick={chip.onClear}
+                className="ml-0.5 rounded-full p-0.5 hover:bg-primary/20 transition-colors"
+                aria-label={`Remove ${chip.label} filter`}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Mobile Card View */}
       <div className="md:hidden">
@@ -354,12 +438,8 @@ export function StoriesList({ stories, programs }: StoriesListProps) {
             </div>
           )
         ) : (
-          <div className="rounded-lg bg-card shadow-sm border border-border p-8 text-center">
-            <p className="text-sm text-muted-foreground">
-              {hasActiveFilters
-                ? "No stories match your filters. Try adjusting your search criteria."
-                : "No stories found. Create your first story to get started."}
-            </p>
+          <div className="rounded-lg bg-card shadow-sm border border-border">
+            <EmptyState hasActiveFilters={!!hasActiveFilters} onClearFilters={clearFilters} />
           </div>
         )}
       </div>
@@ -443,19 +523,15 @@ export function StoriesList({ stories, programs }: StoriesListProps) {
                             </td>
                             <td className="px-6 py-4 w-[12%]">
                               {story.priority && (
-                                <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${getPriorityColor(story.priority)}`}>
-                                  {story.priority}
-                                </span>
+                                <PriorityBadge priority={story.priority} />
                               )}
                             </td>
                             <td className="px-6 py-4 w-[15%]">
-                              <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(story.status)}`}>
-                                {story.status}
-                              </span>
+                              <StatusBadge status={story.status} />
                             </td>
                             <td className="px-6 py-4 w-[12%]">
                               <span className="text-sm text-muted-foreground">
-                                {story.roadmap_target || "—"}
+                                {story.roadmap_target || "\u2014"}
                               </span>
                             </td>
                             <td className="px-6 py-4 w-[11%]">
@@ -507,12 +583,8 @@ export function StoriesList({ stories, programs }: StoriesListProps) {
             </thead>
             <tbody>
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center">
-                  <p className="text-sm text-muted-foreground">
-                    {hasActiveFilters
-                      ? "No stories match your filters. Try adjusting your search criteria."
-                      : "No stories found. Create your first story to get started."}
-                  </p>
+                <td colSpan={6}>
+                  <EmptyState hasActiveFilters={!!hasActiveFilters} onClearFilters={clearFilters} />
                 </td>
               </tr>
             </tbody>
