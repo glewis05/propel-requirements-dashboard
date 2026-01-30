@@ -4,8 +4,8 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { DefectForm } from "@/components/uat/defects/DefectForm"
-import { createDefect } from "@/app/(dashboard)/uat/defect-actions"
-import type { DefectFormData } from "@/app/(dashboard)/uat/defect-actions"
+import { createDefect } from "@/app/(dashboard)/validation/defect-actions"
+import type { DefectFormData } from "@/app/(dashboard)/validation/defect-actions"
 import { ArrowLeft } from "lucide-react"
 
 export default function NewDefectPage() {

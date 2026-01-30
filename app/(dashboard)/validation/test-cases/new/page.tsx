@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { TestCaseForm } from "@/components/uat/test-cases/TestCaseForm"
-import { createTestCase } from "@/app/(dashboard)/uat/actions"
-import type { TestCaseFormData } from "@/app/(dashboard)/uat/actions"
+import { createTestCase } from "@/app/(dashboard)/validation/actions"
+import type { TestCaseFormData } from "@/app/(dashboard)/validation/actions"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 

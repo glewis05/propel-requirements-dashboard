@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { updateTestCase, reviewTestCase, archiveTestCase } from "@/app/(dashboard)/uat/actions"
+import { updateTestCase, reviewTestCase, archiveTestCase } from "@/app/(dashboard)/validation/actions"
 import type { TestCaseStatus } from "@/types/database"
 import { CheckCircle, Archive, Edit, PlayCircle } from "lucide-react"
 

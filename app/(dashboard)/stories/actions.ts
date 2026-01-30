@@ -443,7 +443,7 @@ async function triggerAutoTestCaseGeneration(
   userId: string
 ) {
   // Dynamic import to avoid circular dependencies
-  const { autoGenerateTestCasesForStory } = await import("@/app/(dashboard)/uat/ai-actions")
+  const { autoGenerateTestCasesForStory } = await import("@/app/(dashboard)/validation/ai-actions")
 
   // Fire and forget
   autoGenerateTestCasesForStory(storyId, programId, userId)
