@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect, notFound } from "next/navigation"
-import { checkCycleAccess, getAcknowledgmentStatus } from "@/app/tester/acknowledgment-actions"
-import { getCycleById } from "@/app/(dashboard)/uat/cycles/cycle-actions"
+import { checkCycleAccess, getAcknowledgmentStatus, getCycleById } from "@/app/(tester)/actions"
 import { AcknowledgmentForm } from "@/components/tester/AcknowledgmentForm"
 
 interface AcknowledgePageProps {

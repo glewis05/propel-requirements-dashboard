@@ -4,12 +4,17 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbo",
+    "dev:dashboard": "next dev --turbo -p 3000",
+    "dev:uat": "next dev --turbo -p 3001",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --noEmit",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "db:types": "echo 'Run: npx supabase gen types typescript --project-id YOUR_PROJECT_ID > types/supabase.ts'"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",

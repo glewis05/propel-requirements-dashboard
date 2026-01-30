@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { TestStepEditor } from "./TestStepEditor"
 import type { TestStep } from "@/types/database"
-import type { TestCaseFormData } from "@/app/(dashboard)/uat/actions"
+import type { TestCaseFormData } from "@/app/(dashboard)/validation/actions"
 import { Save, X } from "lucide-react"
 
 interface TestCaseFormProps {

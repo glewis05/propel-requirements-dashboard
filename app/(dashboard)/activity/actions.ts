@@ -1,7 +1,9 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
-import type { ActivityType } from "@/types/database"
+import type { ActivityType, Database } from "@/types/database"
+
+type ActivityInsert = Database['public']['Tables']['activity_log']['Insert']
 
 export interface ActivityWithDetails {
   id: string
@@ -123,15 +125,17 @@ export async function logActivity(
   }
 
   // Insert activity
+  const insertData: ActivityInsert = {
+    activity_type: activityType,
+    user_id: userData.user_id,
+    story_id: storyId || null,
+    comment_id: commentId || null,
+    metadata: metadata || {},
+  }
+
   const { error } = await supabase
     .from("activity_log")
-    .insert({
-      activity_type: activityType,
-      user_id: userData.user_id,
-      story_id: storyId || null,
-      comment_id: commentId || null,
-      metadata: metadata || {},
-    } as never)
+    .insert(insertData)
 
   if (error) {
     console.error("Error logging activity:", error)

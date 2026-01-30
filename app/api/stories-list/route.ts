@@ -12,6 +12,7 @@ export async function GET() {
   const { data: stories, error } = await supabase
     .from("user_stories")
     .select("story_id, title, program_id")
+    .is("deleted_at", null)
     .order("created_at", { ascending: false })
 
   if (error) {

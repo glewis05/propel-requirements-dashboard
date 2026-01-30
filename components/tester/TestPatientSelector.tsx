@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { User, Check, AlertTriangle } from "lucide-react"
-import { selectTestPatient } from "@/app/tester/tester-execution-actions"
+import { selectTestPatient } from "@/app/(tester)/actions"
 
 interface TestPatient {
   patient_id: string

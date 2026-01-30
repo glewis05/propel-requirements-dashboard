@@ -8,7 +8,7 @@ import {
   startTestExecution,
   submitStepResult,
   completeTestExecution,
-} from "@/app/tester/tester-execution-actions"
+} from "@/app/(tester)/actions"
 import {
   Play,
   CheckCircle,

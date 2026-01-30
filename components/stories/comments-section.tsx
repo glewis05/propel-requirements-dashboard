@@ -16,7 +16,7 @@ import {
   User,
 } from "lucide-react"
 import { createComment, resolveComment } from "@/app/(dashboard)/stories/comment-actions"
-import { acceptAnswer, unacceptAnswer } from "@/app/(dashboard)/questions/actions"
+import { acceptAnswer, unacceptAnswer } from "@/app/(dashboard)/clarify/actions"
 import { MentionInput, extractMentionedUserIds, parseMentionsToText } from "@/components/ui/mention-input"
 
 interface CommentsSectionProps {

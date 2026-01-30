@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Sparkles, Check, RefreshCw, Save, X } from "lucide-react"
 import type { GeneratedTestCase } from "@/lib/ai/types"
-import { generateTestCases, saveGeneratedTestCases } from "@/app/(dashboard)/uat/ai-actions"
+import { generateTestCases, saveGeneratedTestCases } from "@/app/(dashboard)/validation/ai-actions"
 
 interface AITestCaseGeneratorProps {
   storyId: string

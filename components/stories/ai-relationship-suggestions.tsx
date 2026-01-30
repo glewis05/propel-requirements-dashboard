@@ -20,13 +20,18 @@ import { updateStory } from "@/app/(dashboard)/stories/actions"
 import type { RelationshipSuggestion } from "@/lib/ai/types"
 
 interface AIRelationshipSuggestionsProps {
-  storyId: string
+  /** Story ID - optional for create mode */
+  storyId?: string
   storyTitle: string
   storyDescription: string
   currentRelatedStories: string[]
   currentParentStoryId: string | null
+  /** Program ID - required for create mode to filter suggestions */
+  programId?: string
   /** Optional callback for form integration - when provided, updates form state instead of making API calls */
   onAddRelated?: (storyId: string) => void
+  /** Set parent story callback for form integration */
+  onSetParent?: (storyId: string) => void
 }
 
 export function AIRelationshipSuggestions({
@@ -35,7 +40,9 @@ export function AIRelationshipSuggestions({
   storyDescription,
   currentRelatedStories,
   currentParentStoryId,
+  programId,
   onAddRelated,
+  onSetParent,
 }: AIRelationshipSuggestionsProps) {
   const router = useRouter()
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null)
@@ -67,9 +74,11 @@ export function AIRelationshipSuggestions({
     setShowPanel(true)
     setAddedIds(new Set())
 
-    const result = await getRelationshipSuggestions(storyId, {
+    const result = await getRelationshipSuggestions(storyId || null, {
       title: storyTitle,
       description: storyDescription,
+      programId,
+      existingRelated: currentRelatedStories,
     })
 
     setIsLoading(false)
@@ -85,6 +94,13 @@ export function AIRelationshipSuggestions({
     setAddingIds((prev) => new Set(prev).add(suggestion.story_id))
 
     try {
+      // Handle parent relationship type with callback
+      if (suggestion.relationship_type === "parent" && onSetParent) {
+        onSetParent(suggestion.story_id)
+        setAddedIds((prev) => new Set(prev).add(suggestion.story_id))
+        return
+      }
+
       // If callback provided (form mode), use it instead of API call
       if (onAddRelated) {
         onAddRelated(suggestion.story_id)
@@ -92,12 +108,15 @@ export function AIRelationshipSuggestions({
         return
       }
 
-      // For now, we only support adding as "related"
-      // Parent relationships require more complex handling
+      // For display mode (no callbacks), make API call
+      if (!storyId) {
+        setError("Cannot add relationships in create mode without form callbacks")
+        return
+      }
+
       const newRelatedStories = [...currentRelatedStories, suggestion.story_id]
 
-      // We need to call updateStory with the full form data
-      // For simplicity, we'll make an API call to just update related_stories
+      // Make an API call to update related_stories
       const result = await fetch(`/api/stories/${storyId}/relationships`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },

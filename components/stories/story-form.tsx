@@ -13,6 +13,7 @@ import {
   Settings,
   Loader2,
   GitBranch,
+  Sparkles,
 } from "lucide-react"
 import { CollapsibleSection } from "./collapsible-section"
 import { RelatedStoriesSelector } from "./related-stories-selector"
@@ -358,62 +359,66 @@ export function StoryForm({
       </CollapsibleSection>
 
       {/* Story Relationships Section */}
-      {(potentialParents.length > 0 || allStories.length > 0) && (
-        <CollapsibleSection
-          title="Story Relationships"
-          icon={<GitBranch className="h-5 w-5 text-purple-500" />}
-          defaultOpen={false}
-          badge={
-            (watchParentStoryId ? 1 : 0) + (watchRelatedStories?.length || 0) || undefined
-          }
-        >
-          <div className="space-y-4">
-            {/* AI Relationship Suggestions - only in edit mode */}
-            {mode === "edit" && initialData?.story_id && (
-              <AIRelationshipSuggestions
-                storyId={initialData.story_id}
-                storyTitle={watch("title") || ""}
-                storyDescription={watch("user_story") || `${watch("role") || ""} ${watch("capability") || ""} ${watch("benefit") || ""}`.trim()}
-                currentRelatedStories={watchRelatedStories as string[]}
-                currentParentStoryId={watchParentStoryId || null}
-                onAddRelated={(id) => {
-                  const current = watchRelatedStories as string[]
-                  if (!current.includes(id)) {
-                    setValue("related_stories", [...current, id], { shouldDirty: true })
-                  }
-                }}
-              />
-            )}
+      <CollapsibleSection
+        title="Story Relationships"
+        icon={<GitBranch className="h-5 w-5 text-purple-500" />}
+        defaultOpen={false}
+        badge={
+          (watchParentStoryId ? 1 : 0) + (watchRelatedStories?.length || 0) || undefined
+        }
+      >
+        <div className="space-y-4">
+          {/* AI Relationship Suggestions - works in both create and edit modes */}
+          <AIRelationshipSuggestions
+            storyId={initialData?.story_id}
+            storyTitle={watch("title") || ""}
+            storyDescription={watch("user_story") || `${watch("role") || ""} ${watch("capability") || ""} ${watch("benefit") || ""}`.trim()}
+            currentRelatedStories={watchRelatedStories as string[]}
+            currentParentStoryId={watchParentStoryId || null}
+            programId={watchProgramId}
+            onAddRelated={(id) => {
+              const current = watchRelatedStories as string[]
+              if (!current.includes(id)) {
+                setValue("related_stories", [...current, id], { shouldDirty: true })
+              }
+            }}
+            onSetParent={(id) => {
+              setValue("parent_story_id", id, { shouldDirty: true })
+            }}
+          />
 
             {/* Parent Story */}
-            {potentialParents.length > 0 && (
-              <div>
-                <label htmlFor="parent_story_id" className="block text-sm font-medium text-foreground mb-1">
-                  Parent Story
-                </label>
-                <p className="text-xs text-muted-foreground mb-2">
-                  Select a parent story to create a hierarchy. Parent must be in the same program.
+            <div>
+              <label htmlFor="parent_story_id" className="block text-sm font-medium text-foreground mb-1">
+                Parent Story
+              </label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Select a parent story to create a hierarchy. Parent must be in the same program.
+              </p>
+              <select
+                id="parent_story_id"
+                {...register("parent_story_id")}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                disabled={!watchProgramId}
+              >
+                <option value="">No parent (top-level story)</option>
+                {filteredPotentialParents.map((story) => (
+                  <option key={story.story_id} value={story.story_id}>
+                    {story.title} ({story.story_id})
+                  </option>
+                ))}
+              </select>
+              {!watchProgramId && (
+                <p className="mt-1 text-xs text-amber-600">
+                  Select a program first to see available parent stories.
                 </p>
-                <select
-                  id="parent_story_id"
-                  {...register("parent_story_id")}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                  disabled={!watchProgramId}
-                >
-                  <option value="">No parent (top-level story)</option>
-                  {filteredPotentialParents.map((story) => (
-                    <option key={story.story_id} value={story.story_id}>
-                      {story.title} ({story.story_id})
-                    </option>
-                  ))}
-                </select>
-                {!watchProgramId && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Select a program first to see available parent stories.
-                  </p>
-                )}
-              </div>
-            )}
+              )}
+              {watchProgramId && filteredPotentialParents.length === 0 && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  No eligible parent stories in this program. Stories that already have a parent cannot be selected.
+                </p>
+              )}
+            </div>
 
             {/* Related Stories */}
             {allStories.length > 0 && (
@@ -435,7 +440,6 @@ export function StoryForm({
             )}
           </div>
         </CollapsibleSection>
-      )}
 
       {/* Acceptance Criteria Section */}
       <CollapsibleSection

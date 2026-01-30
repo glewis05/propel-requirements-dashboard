@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { cn } from "@/lib/utils"
-import { DEFECT_STATUS_CONFIG } from "@/lib/uat/execution-transitions"
+import { DEFECT_STATUS_CONFIG } from "@/lib/validation/execution-transitions"
 import type { DefectSeverity, DefectStatus } from "@/types/database"
 import { Bug, AlertTriangle, Clock } from "lucide-react"
 
@@ -37,7 +37,7 @@ export function DefectCard({ defect, reportedByName }: DefectCardProps) {
 
   return (
     <Link
-      href={`/uat/defects/${defect.defect_id}`}
+      href={`/validation/defects/${defect.defect_id}`}
       className="block rounded-lg border bg-card p-4 hover:border-primary/50 transition-colors"
     >
       <div className="flex items-start justify-between gap-3">

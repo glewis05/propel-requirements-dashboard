@@ -63,8 +63,8 @@ export function Header({ user, profile }: HeaderProps) {
         {/* Title - shorter on mobile */}
         <div className="flex flex-1 items-center">
           <p aria-hidden="true" className="text-lg font-semibold text-foreground">
-            <span className="sm:hidden">Requirements</span>
-            <span className="hidden sm:inline">Requirements Dashboard</span>
+            <span className="sm:hidden">TraceWell</span>
+            <span className="hidden sm:inline">TraceWell</span>
           </p>
         </div>
 

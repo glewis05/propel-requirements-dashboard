@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { cn } from "@/lib/utils"
-import { TEST_CASE_STATUS_CONFIG } from "@/lib/uat/execution-transitions"
+import { TEST_CASE_STATUS_CONFIG } from "@/lib/validation/execution-transitions"
 import type { TestCaseStatus, TestStep } from "@/types/database"
 import { FileText, Sparkles, CheckCircle, Clock } from "lucide-react"
 
@@ -34,7 +34,7 @@ export function TestCaseCard({ testCase }: TestCaseCardProps) {
 
   return (
     <Link
-      href={`/uat/test-cases/${testCase.test_case_id}`}
+      href={`/validation/test-cases/${testCase.test_case_id}`}
       className="block rounded-lg border bg-card p-4 hover:border-primary/50 transition-colors"
     >
       <div className="flex items-start justify-between gap-3">

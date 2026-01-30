@@ -3,6 +3,10 @@
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { sendMentionNotifications } from "@/lib/notifications/service"
+import type { Database } from "@/types/database"
+
+type CommentInsert = Database['public']['Tables']['story_comments']['Insert']
+type CommentUpdate = Database['public']['Tables']['story_comments']['Update']
 
 interface UserData {
   user_id: string
@@ -61,15 +65,16 @@ export async function createComment(
   }
 
   // Create comment
+  const insertData: CommentInsert = {
+    story_id: storyId,
+    user_id: userData.user_id,
+    content: content.trim(),
+    is_question: isQuestion,
+    parent_comment_id: parentCommentId || null,
+  }
   const { data: comment, error } = await supabase
     .from("story_comments")
-    .insert({
-      story_id: storyId,
-      user_id: userData.user_id,
-      content: content.trim(),
-      is_question: isQuestion,
-      parent_comment_id: parentCommentId || null,
-    } as never)
+    .insert(insertData)
     .select()
     .single() as { data: CommentData | null; error: Error | null }
 
@@ -113,9 +118,10 @@ export async function resolveComment(commentId: string, resolved: boolean) {
     return { success: false, error: "Not authenticated" }
   }
 
+  const updateData: CommentUpdate = { resolved, updated_at: new Date().toISOString() }
   const { error } = await supabase
     .from("story_comments")
-    .update({ resolved, updated_at: new Date().toISOString() } as never)
+    .update(updateData)
     .eq("id", commentId)
 
   if (error) {

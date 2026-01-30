@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { assignExecution } from "@/app/(dashboard)/uat/execution-actions"
+import { assignExecution } from "@/app/(dashboard)/validation/execution-actions"
 import { X, UserPlus } from "lucide-react"
 
 interface AssignmentModalProps {

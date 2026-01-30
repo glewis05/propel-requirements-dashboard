@@ -4,7 +4,7 @@ import { CheckCircle, XCircle, MessageSquare } from "lucide-react"
 export default async function ApprovalsPage() {
   const supabase = await createClient()
 
-  // Fetch stories pending approval
+  // Fetch stories pending approval (exclude soft-deleted)
   const { data: pendingStories } = await supabase
     .from("user_stories")
     .select(`
@@ -17,6 +17,7 @@ export default async function ApprovalsPage() {
       client_review_date
     `)
     .in("status", ["Internal Review", "Pending Client Review"])
+    .is("deleted_at", null)
     .order("client_review_date", { ascending: true })
 
   return (

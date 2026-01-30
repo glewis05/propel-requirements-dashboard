@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { cn } from "@/lib/utils"
-import { EXECUTION_STATUS_CONFIG } from "@/lib/uat/execution-transitions"
+import { EXECUTION_STATUS_CONFIG } from "@/lib/validation/execution-transitions"
 import type { ExecutionStatus } from "@/types/database"
 import { Play, Clock, User } from "lucide-react"
 
@@ -28,7 +28,7 @@ export function ExecutionCard({ execution, testCaseTitle, assignedToName }: Exec
 
   return (
     <Link
-      href={`/uat/executions/${execution.execution_id}`}
+      href={`/validation/executions/${execution.execution_id}`}
       className="block rounded-lg border bg-card p-4 hover:border-primary/50 transition-colors"
     >
       <div className="flex items-start justify-between gap-3">

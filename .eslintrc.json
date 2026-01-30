@@ -1,1 +1,98 @@
-{"extends": "next/core-web-vitals"}
+{
+  "extends": "next/core-web-vitals",
+  "rules": {},
+  "overrides": [
+    {
+      "files": ["app/(dashboard)/**/*.ts", "app/(dashboard)/**/*.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/app/(tester)/**"],
+                "message": "Dashboard module cannot import from tester module. Move shared code to lib/ or components/."
+              },
+              {
+                "group": ["@/app/(auth)/**"],
+                "message": "Dashboard module cannot import from auth module."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["app/(tester)/**/*.ts", "app/(tester)/**/*.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/app/(dashboard)/**"],
+                "message": "Tester module cannot import from dashboard module. Move shared code to lib/ or components/."
+              },
+              {
+                "group": ["@/app/(auth)/**"],
+                "message": "Tester module cannot import from auth module."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["app/tester/**/*.ts", "app/tester/**/*.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "warn",
+          {
+            "patterns": [
+              {
+                "group": ["@/app/(dashboard)/**"],
+                "message": "TECH DEBT: Legacy tester module importing from dashboard. Migrate to app/(tester)/ and use shared lib/."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["lib/**/*.ts", "lib/**/*.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/app/**"],
+                "message": "Shared lib/ cannot import from app/. Move the code or use dependency injection."
+              },
+              {
+                "group": ["@/components/**"],
+                "message": "Shared lib/ should not import from components/. Keep lib/ for pure business logic."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["components/**/*.ts", "components/**/*.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "warn",
+          {
+            "patterns": [
+              {
+                "group": ["@/app/**/page", "@/app/**/page.tsx", "@/app/**/layout", "@/app/**/layout.tsx"],
+                "message": "Components should not import from page or layout files."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

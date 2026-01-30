@@ -66,14 +66,14 @@ export function UATDashboard({ stats, testerWorkloads, storyProgress, userRole }
           icon={<FileText className="h-5 w-5 text-blue-600" />}
           label="Test Cases"
           value={stats.totalTestCases}
-          href="/uat/test-cases"
+          href="/validation/test-cases"
         />
         <StatCard
           icon={<Play className="h-5 w-5 text-yellow-600" />}
           label="Executions"
           value={stats.totalExecutions}
           subtext={`${stats.pendingCount} pending`}
-          href="/uat/executions"
+          href="/validation/executions"
         />
         <StatCard
           icon={<CheckCircle className="h-5 w-5 text-green-600" />}
@@ -89,7 +89,7 @@ export function UATDashboard({ stats, testerWorkloads, storyProgress, userRole }
           label="Open Defects"
           value={stats.openDefects}
           subtext={stats.criticalDefects > 0 ? `${stats.criticalDefects} critical` : undefined}
-          href="/uat/defects"
+          href="/validation/defects"
           variant={stats.criticalDefects > 0 ? "danger" : "default"}
         />
       </div>
@@ -212,7 +212,7 @@ export function UATDashboard({ stats, testerWorkloads, storyProgress, userRole }
           <div className="rounded-lg border bg-card">
             <div className="flex items-center justify-between border-b p-4">
               <h3 className="font-medium">Tester Workload</h3>
-              <Link href="/uat/executions" className="text-xs text-primary hover:underline">
+              <Link href="/validation/executions" className="text-xs text-primary hover:underline">
                 View all
               </Link>
             </div>
@@ -274,7 +274,7 @@ export function UATDashboard({ stats, testerWorkloads, storyProgress, userRole }
           <div className="rounded-lg border bg-card">
             <div className="flex items-center justify-between border-b p-4">
               <h3 className="font-medium">My Assigned Tests</h3>
-              <Link href="/uat/executions/my" className="text-xs text-primary hover:underline inline-flex items-center gap-1">
+              <Link href="/validation/executions/my" className="text-xs text-primary hover:underline inline-flex items-center gap-1">
                 View all <ArrowRight className="h-3 w-3" />
               </Link>
             </div>
@@ -282,7 +282,7 @@ export function UATDashboard({ stats, testerWorkloads, storyProgress, userRole }
               <Play className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
               <p>Go to My Tests to see and execute your assigned tests</p>
               <Link
-                href="/uat/executions/my"
+                href="/validation/executions/my"
                 className="inline-flex items-center gap-2 mt-3 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
                 <Play className="h-4 w-4" />
@@ -299,21 +299,21 @@ export function UATDashboard({ stats, testerWorkloads, storyProgress, userRole }
           <h3 className="font-medium mb-3">Quick Actions</h3>
           <div className="flex flex-wrap gap-3">
             <Link
-              href="/uat/test-cases/new"
+              href="/validation/test-cases/new"
               className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
             >
               <FileText className="h-4 w-4" />
               New Test Case
             </Link>
             <Link
-              href="/uat/defects/new"
+              href="/validation/defects/new"
               className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
             >
               <Bug className="h-4 w-4" />
               Report Defect
             </Link>
             <Link
-              href="/uat/executions"
+              href="/validation/executions"
               className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
             >
               <Users className="h-4 w-4" />

@@ -15,11 +15,12 @@ export default async function EditStoryPage({ params }: Props) {
   const { id } = await params
   const supabase = await createClient()
 
-  // Fetch story details
+  // Fetch story details (exclude soft-deleted)
   const { data: story, error } = await supabase
     .from("user_stories")
     .select("*")
     .eq("story_id", id)
+    .is("deleted_at", null)
     .single()
 
   if (error || !story) {
@@ -33,11 +34,12 @@ export default async function EditStoryPage({ params }: Props) {
     .eq("status", "Active")
     .order("name")
 
-  // Fetch all stories for relationships (excluding current story)
+  // Fetch all stories for relationships (excluding current story and soft-deleted)
   const { data: allStoriesData } = await supabase
     .from("user_stories")
     .select("story_id, title, program_id, parent_story_id")
     .neq("story_id", id)
+    .is("deleted_at", null)
     .order("title")
 
   // Get program names for display
@@ -51,11 +53,12 @@ export default async function EditStoryPage({ params }: Props) {
     program_name: programMap.get(s.program_id) || undefined,
   }))
 
-  // Check if this story has children (can't set parent if it does)
+  // Check if this story has children (can't set parent if it does), exclude soft-deleted
   const { data: childrenData } = await supabase
     .from("user_stories")
     .select("story_id")
     .eq("parent_story_id", id)
+    .is("deleted_at", null)
     .limit(1)
 
   const hasChildren = (childrenData || []).length > 0

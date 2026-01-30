@@ -21,7 +21,7 @@ export function CollapsibleSection({
   const [isOpen, setIsOpen] = useState(defaultOpen)
 
   return (
-    <div className="rounded-lg bg-card shadow-sm border border-border overflow-hidden">
+    <div className="rounded-lg bg-card shadow-sm border border-border overflow-visible">
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -43,7 +43,7 @@ export function CollapsibleSection({
         )}
       </button>
       {isOpen && (
-        <div className="px-6 pb-6 border-t border-border pt-4">{children}</div>
+        <div className="px-6 pb-6 border-t border-border pt-4 overflow-visible">{children}</div>
       )}
     </div>
   )

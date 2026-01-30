@@ -96,10 +96,12 @@ export async function generateAcceptanceCriteria(storyData: {
 
 /**
  * Get relationship suggestions using AI
+ * @param storyId - Optional story ID (not required for create mode)
+ * @param storyData - Story data including title, description, and optionally programId for create mode
  */
 export async function getRelationshipSuggestions(
-  storyId: string,
-  storyData: { title: string; description: string }
+  storyId: string | null,
+  storyData: { title: string; description: string; programId?: string; existingRelated?: string[] }
 ): Promise<RelationshipSuggestionsResponse> {
   // Check authentication
   const supabase = await createClient()
@@ -119,41 +121,52 @@ export async function getRelationshipSuggestions(
     }
   }
 
-  // Fetch current story details including program
-  const { data: currentStoryData, error: storyError } = await supabase
-    .from("user_stories")
-    .select("story_id, title, user_story, role, capability, benefit, program_id, related_stories")
-    .eq("story_id", storyId)
-    .single()
+  let programId: string | null = storyData.programId || null
+  let description = storyData.description
+  let existingRelated: string[] = storyData.existingRelated || []
+  let programName: string | undefined
 
-  if (storyError || !currentStoryData) {
-    return {
-      success: false,
-      error: "Could not find the story.",
+  // For edit mode, fetch current story details
+  if (storyId) {
+    const { data: currentStoryData, error: storyError } = await supabase
+      .from("user_stories")
+      .select("story_id, title, user_story, role, capability, benefit, program_id, related_stories")
+      .eq("story_id", storyId)
+      .single()
+
+    if (storyError || !currentStoryData) {
+      return {
+        success: false,
+        error: "Could not find the story.",
+      }
+    }
+
+    const currentStory = currentStoryData as Pick<UserStory, "story_id" | "title" | "user_story" | "role" | "capability" | "benefit" | "program_id" | "related_stories">
+    programId = currentStory.program_id
+    existingRelated = (currentStory.related_stories as string[]) || []
+
+    // Build story description from available fields if not provided
+    if (!description) {
+      description = currentStory.user_story ||
+        (currentStory.role && currentStory.capability
+          ? `As a ${currentStory.role}, I want to ${currentStory.capability}${currentStory.benefit ? ` so that ${currentStory.benefit}` : ""}`
+          : "")
     }
   }
 
-  const currentStory = currentStoryData as Pick<UserStory, "story_id" | "title" | "user_story" | "role" | "capability" | "benefit" | "program_id" | "related_stories">
+  // Fetch program name if we have a programId
+  if (programId) {
+    const { data: programData } = await supabase
+      .from("programs")
+      .select("name")
+      .eq("program_id", programId)
+      .single()
 
-  // Fetch program name
-  const { data: programData } = await supabase
-    .from("programs")
-    .select("name")
-    .eq("program_id", currentStory.program_id)
-    .single()
-
-  const program = programData as Pick<Program, "name"> | null
-
-  // Build story description from available fields
-  const description = storyData.description ||
-    currentStory.user_story ||
-    (currentStory.role && currentStory.capability
-      ? `As a ${currentStory.role}, I want to ${currentStory.capability}${currentStory.benefit ? ` so that ${currentStory.benefit}` : ""}`
-      : "")
+    programName = (programData as Pick<Program, "name"> | null)?.name
+  }
 
   // Fetch other stories to compare against (excluding current story and already related)
-  const existingRelated = (currentStory.related_stories as string[]) || []
-  const excludeIds = [storyId, ...existingRelated]
+  const excludeIds = storyId ? [storyId, ...existingRelated] : existingRelated
 
   const { data: otherStoriesData, error: fetchError } = await supabase
     .from("user_stories")
@@ -202,10 +215,10 @@ export async function getRelationshipSuggestions(
   // Build the user prompt
   const userPrompt = RELATIONSHIP_SUGGESTIONS_USER_PROMPT({
     currentStory: {
-      story_id: storyId,
+      story_id: storyId || "new-story",
       title: storyData.title,
       description,
-      programName: program?.name,
+      programName,
     },
     existingStories: existingStoriesContext,
   })

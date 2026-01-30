@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { CycleSelector } from "@/components/tester/CycleSelector"
-import { getMyCycles } from "@/app/(dashboard)/uat/cycles/cycle-actions"
+import { getMyCycles } from "@/app/(tester)/actions"
 
 export const metadata = {
   title: "UAT Testing Portal | Providence Healthcare",

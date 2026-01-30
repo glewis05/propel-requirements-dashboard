@@ -1,8 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect, notFound } from "next/navigation"
 import Link from "next/link"
-import { checkCycleAccess } from "@/app/tester/acknowledgment-actions"
-import { getTesterCycleSummary, getMyAssignedTests } from "@/app/tester/tester-execution-actions"
+import { checkCycleAccess, getTesterCycleSummary, getMyAssignedTests } from "@/app/(tester)/actions"
 import { TestQueue } from "@/components/tester/TestQueue"
 import { ArrowLeft, Clock, CheckCircle, XCircle, AlertTriangle, BarChart3 } from "lucide-react"
 

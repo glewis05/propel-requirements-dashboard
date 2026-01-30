@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils"
 import type { UserRole } from "@/types/database"
 import { X } from "lucide-react"
 import { getFilteredGroups } from "@/lib/navigation"
+import { TracewellLogo } from "@/components/ui/tracewell-logo"
 
 interface MobileNavProps {
   isOpen: boolean
@@ -70,24 +71,10 @@ export function MobileNav({ isOpen, onClose, userRole, userName }: MobileNavProp
           {/* Header */}
           <div className="flex h-16 items-center justify-between px-4 border-b border-white/10">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-propel-gold">
-                <svg
-                  className="h-6 w-6 text-propel-navy"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-              </div>
+              <TracewellLogo size="sm" />
               <div>
-                <span className="text-lg font-bold text-white">Providence</span>
-                <p className="text-xs text-propel-gold">Requirements Dashboard</p>
+                <span className="text-lg font-bold text-white">TraceWell</span>
+                <p className="text-[10px] text-white/60">Compliance Backbone</p>
               </div>
             </div>
             <button
@@ -154,10 +141,10 @@ export function MobileNav({ isOpen, onClose, userRole, userName }: MobileNavProp
             </div>
           </div>
 
-          {/* Powered by PHP tagline */}
+          {/* Powered by Propel Health */}
           <div className="border-t border-white/10 px-4 py-3">
             <p className="text-[10px] text-white/40 text-center">
-              Powered by <span className="text-propel-gold font-medium">Propel Health Platform</span>
+              Powered by <span className="text-propel-gold font-medium">Propel Health</span>
             </p>
           </div>
         </div>

@@ -79,7 +79,7 @@ export async function getProgramSummaryReport(): Promise<{
 }> {
   const supabase = await createClient()
 
-  // Get all stories grouped by program
+  // Get all stories grouped by program (exclude soft-deleted)
   const { data: stories, error } = await supabase
     .from("user_stories")
     .select(`
@@ -88,7 +88,8 @@ export async function getProgramSummaryReport(): Promise<{
       status,
       priority,
       stakeholder_approved_at
-    `) as { data: Array<{
+    `)
+    .is("deleted_at", null) as { data: Array<{
       story_id: string
       program_id: string
       status: StoryStatus
@@ -241,6 +242,7 @@ export async function getStoryCoverageReport(programId?: string): Promise<{
         priority,
         requirement_id
       `)
+      .is("deleted_at", null)
 
     if (programId) {
       fallbackQuery = fallbackQuery.eq("program_id", programId)
@@ -344,7 +346,7 @@ export async function getStatusTransitionsReport(
     return { success: true, data: [] }
   }
 
-  // Get story details
+  // Get story details (include deleted stories for historical report accuracy)
   const storyIds = Array.from(new Set(approvals.map(a => a.story_id)))
   const { data: stories } = await supabase
     .from("user_stories")

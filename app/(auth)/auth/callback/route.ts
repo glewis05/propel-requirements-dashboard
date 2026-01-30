@@ -30,7 +30,7 @@ export async function GET(request: Request) {
           const updateData: UsersUpdate = { last_login_at: new Date().toISOString() }
           await supabase
             .from("users")
-            .update(updateData as never)
+            .update(updateData)
             .eq("auth_id", user.id)
 
           // Redirect UAT Testers to tester portal by default (unless they requested a specific path)

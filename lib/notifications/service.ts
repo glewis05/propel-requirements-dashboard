@@ -1,7 +1,9 @@
 import { createClient } from "@/lib/supabase/server"
 import { sendEmail, generateStatusChangeEmail, generateMentionEmail } from "./email"
 import { STATUS_NOTIFICATION_RULES, DEFAULT_NOTIFICATION_PREFERENCES } from "./config"
-import type { StoryStatus, UserRole, NotificationPreferences } from "@/types/database"
+import type { StoryStatus, UserRole, NotificationPreferences, Database } from "@/types/database"
+
+type NotificationInsert = Database['public']['Tables']['user_notifications']['Insert']
 
 interface UserBasic {
   name: string
@@ -179,16 +181,17 @@ export async function sendMentionNotifications(params: MentionNotificationParams
 
   // Create in-app notifications for ALL mentioned users (regardless of email preferences)
   const inAppPromises = mentionedUsers.map(async (user) => {
+    const notificationData: NotificationInsert = {
+      user_id: user.user_id,
+      title: `${mentionerName} mentioned you`,
+      message: readableContent.length > 100 ? readableContent.slice(0, 100) + "..." : readableContent,
+      notification_type: "mention",
+      story_id: storyId,
+      comment_id: commentId,
+    }
     await supabase
       .from("user_notifications")
-      .insert({
-        user_id: user.user_id,
-        title: `${mentionerName} mentioned you`,
-        message: readableContent.length > 100 ? readableContent.slice(0, 100) + "..." : readableContent,
-        notification_type: "mention",
-        story_id: storyId,
-        comment_id: commentId,
-      } as never)
+      .insert(notificationData)
   })
 
   await Promise.all(inAppPromises)

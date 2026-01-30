@@ -12,6 +12,10 @@ import {
   FlaskConical,
   RefreshCw,
   UserCheck,
+  ShieldCheck,
+  Grid3X3,
+  Library,
+  FileCheck,
   type LucideIcon,
 } from "lucide-react"
 import type { UserRole } from "@/types/database"
@@ -33,13 +37,13 @@ const navigationGroups: NavGroup[] = [
     label: "Core",
     items: [
       {
-        name: "Dashboard",
+        name: "Overview",
         href: "/dashboard",
         icon: LayoutDashboard,
         roles: ["Portfolio Manager", "Program Manager", "Developer", "Admin"],
       },
       {
-        name: "User Stories",
+        name: "Stories",
         href: "/stories",
         icon: FileText,
         roles: ["Portfolio Manager", "Program Manager", "Developer", "Admin"],
@@ -56,8 +60,8 @@ const navigationGroups: NavGroup[] = [
     label: "Workflow",
     items: [
       {
-        name: "Questions",
-        href: "/questions",
+        name: "Clarify",
+        href: "/clarify",
         icon: HelpCircle,
         roles: ["Portfolio Manager", "Program Manager", "Developer", "Admin"],
       },
@@ -70,25 +74,54 @@ const navigationGroups: NavGroup[] = [
     ],
   },
   {
-    label: "UAT Testing",
+    label: "Validation",
     items: [
       {
-        name: "UAT",
-        href: "/uat",
+        name: "Validation",
+        href: "/validation",
         icon: FlaskConical,
         roles: ["Portfolio Manager", "Program Manager", "Admin", "UAT Manager", "UAT Tester"],
       },
       {
-        name: "UAT Cycles",
-        href: "/uat/cycles",
+        name: "Test Cycles",
+        href: "/validation/cycles",
         icon: RefreshCw,
         roles: ["Portfolio Manager", "Program Manager", "Admin", "UAT Manager"],
       },
       {
         name: "Test Patients",
-        href: "/uat/test-patients",
+        href: "/validation/test-patients",
         icon: UserCheck,
         roles: ["Portfolio Manager", "Program Manager", "Admin", "UAT Manager"],
+      },
+    ],
+  },
+  {
+    label: "Compliance",
+    items: [
+      {
+        name: "Dashboard",
+        href: "/compliance",
+        icon: ShieldCheck,
+        roles: ["Portfolio Manager", "Program Manager", "Admin"],
+      },
+      {
+        name: "Compliance Matrix",
+        href: "/compliance/matrix",
+        icon: Grid3X3,
+        roles: ["Portfolio Manager", "Program Manager", "Admin"],
+      },
+      {
+        name: "Control Library",
+        href: "/compliance/controls",
+        icon: Library,
+        roles: ["Portfolio Manager", "Program Manager", "Developer", "Admin"],
+      },
+      {
+        name: "Audit Reports",
+        href: "/compliance/reports",
+        icon: FileCheck,
+        roles: ["Portfolio Manager", "Program Manager", "Admin"],
       },
     ],
   },

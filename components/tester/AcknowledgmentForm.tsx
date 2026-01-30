@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Shield, AlertTriangle, CheckCircle } from "lucide-react"
-import { recordAcknowledgment } from "@/app/tester/acknowledgment-actions"
+import { recordAcknowledgment } from "@/app/(tester)/actions"
 
 interface AcknowledgmentFormProps {
   cycleId: string

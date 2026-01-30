@@ -1,7 +1,10 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
-import type { NotificationType } from "@/types/database"
+import type { NotificationType, Database } from "@/types/database"
+
+type NotificationInsert = Database['public']['Tables']['user_notifications']['Insert']
+type NotificationUpdate = Database['public']['Tables']['user_notifications']['Update']
 
 export interface UserNotification {
   id: string
@@ -88,12 +91,14 @@ export async function markNotificationAsRead(notificationId: string): Promise<{
     return { success: false, error: "Not authenticated" }
   }
 
+  const updateData: NotificationUpdate = {
+    is_read: true,
+    read_at: new Date().toISOString(),
+  }
+
   const { error } = await supabase
     .from("user_notifications")
-    .update({
-      is_read: true,
-      read_at: new Date().toISOString(),
-    } as never)
+    .update(updateData)
     .eq("id", notificationId)
 
   if (error) {
@@ -127,12 +132,14 @@ export async function markAllNotificationsAsRead(): Promise<{
     return { success: false, error: "User profile not found" }
   }
 
+  const markAllUpdate: NotificationUpdate = {
+    is_read: true,
+    read_at: new Date().toISOString(),
+  }
+
   const { error } = await supabase
     .from("user_notifications")
-    .update({
-      is_read: true,
-      read_at: new Date().toISOString(),
-    } as never)
+    .update(markAllUpdate)
     .eq("user_id", userData.user_id)
     .eq("is_read", false)
 
@@ -180,16 +187,18 @@ export async function createNotification(params: {
 }): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient()
 
+  const insertData: NotificationInsert = {
+    user_id: params.userId,
+    title: params.title,
+    message: params.message,
+    notification_type: params.notificationType,
+    story_id: params.storyId || null,
+    comment_id: params.commentId || null,
+  }
+
   const { error } = await supabase
     .from("user_notifications")
-    .insert({
-      user_id: params.userId,
-      title: params.title,
-      message: params.message,
-      notification_type: params.notificationType,
-      story_id: params.storyId || null,
-      comment_id: params.commentId || null,
-    } as never)
+    .insert(insertData)
 
   if (error) {
     console.error("Error creating notification:", error)

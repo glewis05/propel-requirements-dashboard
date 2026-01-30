@@ -33,23 +33,24 @@ function PriorityBadgeIcon({ priority, size = "default" }: { priority: string; s
 export default async function DashboardPage() {
   const supabase = await createClient()
 
-  // Fetch summary statistics
+  // Fetch summary statistics (exclude soft-deleted stories)
   const [
     { count: totalStories },
     { count: approvedStories },
     { count: pendingStories },
     { count: needsDiscussion },
   ] = await Promise.all([
-    supabase.from("user_stories").select("*", { count: "exact", head: true }),
-    supabase.from("user_stories").select("*", { count: "exact", head: true }).eq("status", "Approved"),
-    supabase.from("user_stories").select("*", { count: "exact", head: true }).eq("status", "Pending Client Review"),
-    supabase.from("user_stories").select("*", { count: "exact", head: true }).eq("status", "Needs Discussion"),
+    supabase.from("user_stories").select("*", { count: "exact", head: true }).is("deleted_at", null),
+    supabase.from("user_stories").select("*", { count: "exact", head: true }).eq("status", "Approved").is("deleted_at", null),
+    supabase.from("user_stories").select("*", { count: "exact", head: true }).eq("status", "Pending Client Review").is("deleted_at", null),
+    supabase.from("user_stories").select("*", { count: "exact", head: true }).eq("status", "Needs Discussion").is("deleted_at", null),
   ])
 
-  // Fetch recent stories
+  // Fetch recent stories (exclude soft-deleted)
   const { data: recentStories } = await supabase
     .from("user_stories")
     .select("story_id, title, status, priority, program_id, updated_at")
+    .is("deleted_at", null)
     .order("updated_at", { ascending: false })
     .limit(5)
 

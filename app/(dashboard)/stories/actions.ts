@@ -160,7 +160,7 @@ export async function updateStory(storyId: string, data: StoryFormData) {
   return { success: true, storyId }
 }
 
-export async function deleteStory(storyId: string) {
+export async function deleteStory(storyId: string, reason?: string) {
   const supabase = await createClient()
 
   // Get current user and verify permissions
@@ -169,10 +169,10 @@ export async function deleteStory(storyId: string) {
     return { success: false, error: "Not authenticated" }
   }
 
-  // Get user role
+  // Get user details including role
   const { data: userData } = await supabase
     .from("users")
-    .select("role")
+    .select("user_id, role")
     .eq("auth_id", user.id)
     .single()
 
@@ -181,43 +181,55 @@ export async function deleteStory(storyId: string) {
     return { success: false, error: "Only administrators can delete stories" }
   }
 
-  // Check if story is protected (client-approved and in development/UAT)
+  // Fetch story details for protection check and audit logging
   const { data: story } = await supabase
     .from("user_stories")
-    .select("status, stakeholder_approved_at")
+    .select("status, title, program_id, deleted_at")
     .eq("story_id", storyId)
     .single()
 
-  if (story?.stakeholder_approved_at &&
-      ["Approved", "In Development", "In UAT"].includes(story.status)) {
+  if (!story) {
+    return { success: false, error: "Story not found" }
+  }
+
+  // Check if already deleted
+  if (story.deleted_at) {
+    return { success: false, error: "Story has already been deleted" }
+  }
+
+  // Block deletion of ANY story with Approved status or beyond
+  const protectedStatuses = ["Approved", "In Development", "In UAT"]
+  if (protectedStatuses.includes(story.status)) {
     return {
       success: false,
-      error: "Cannot delete stories that have been client-approved and are in Approved, Development, or UAT status"
+      error: `Cannot delete stories in "${story.status}" status. Approved stories are protected for audit compliance.`
     }
   }
 
-  // Clear parent_story_id on any child stories (orphan them)
-  await supabase
-    .from("user_stories")
-    .update({ parent_story_id: null })
-    .eq("parent_story_id", storyId)
+  // Log the deletion activity BEFORE soft-deleting (preserves audit trail)
+  await supabase.rpc("log_activity", {
+    p_activity_type: "story_deleted",
+    p_user_id: userData.user_id,
+    p_story_id: storyId,
+    p_metadata: {
+      story_title: story.title,
+      story_status: story.status,
+      program_id: story.program_id,
+      reason: reason || null,
+    },
+  })
 
-  // Remove this story from all related_stories arrays
-  await supabase.rpc("remove_story_from_related", { p_story_id: storyId })
-
-  // Delete related records (comments, approvals, versions)
-  await supabase.from("story_comments").delete().eq("story_id", storyId)
-  await supabase.from("story_approvals").delete().eq("story_id", storyId)
-  await supabase.from("story_versions").delete().eq("story_id", storyId)
-
-  // Delete the story
+  // Soft-delete: set deleted_at and deleted_by instead of hard delete
   const { error } = await supabase
     .from("user_stories")
-    .delete()
+    .update({
+      deleted_at: new Date().toISOString(),
+      deleted_by: userData.user_id,
+    })
     .eq("story_id", storyId)
 
   if (error) {
-    console.error("Error deleting story:", error)
+    console.error("Error soft-deleting story:", error)
     return { success: false, error: error.message }
   }
 
@@ -416,5 +428,29 @@ export async function transitionStoryStatus(
     notes,
   }).catch((err) => console.error("Failed to send notifications:", err))
 
+  // Auto-generate test cases when story moves to Approved (non-blocking)
+  if (newStatus === "Approved") {
+    triggerAutoTestCaseGeneration(storyId, story.program_id, userData.user_id)
+      .catch((err) => console.error("Failed to trigger auto test case generation:", err))
+  }
+
   return { success: true }
+}
+
+async function triggerAutoTestCaseGeneration(
+  storyId: string,
+  programId: string,
+  userId: string
+) {
+  // Dynamic import to avoid circular dependencies
+  const { autoGenerateTestCasesForStory } = await import("@/app/(dashboard)/uat/ai-actions")
+
+  // Fire and forget
+  autoGenerateTestCasesForStory(storyId, programId, userId)
+    .then(result => {
+      if (result.success && result.count > 0) {
+        console.log(`Auto-generated ${result.count} test cases for story ${storyId}`)
+      }
+    })
+    .catch(err => console.error(`Auto test case generation failed for ${storyId}:`, err))
 }

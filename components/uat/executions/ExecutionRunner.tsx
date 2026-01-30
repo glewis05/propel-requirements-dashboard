@@ -3,14 +3,14 @@
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 import type { TestStep, StepResult, ExecutionStatus } from "@/types/database"
-import { EXECUTION_STATUS_CONFIG, getAllowedExecutionTransitions } from "@/lib/uat/execution-transitions"
+import { EXECUTION_STATUS_CONFIG, getAllowedExecutionTransitions } from "@/lib/validation/execution-transitions"
 import type { UserRole } from "@/types/database"
 import {
   startExecution,
   updateStepResult,
   completeExecution,
   verifyExecution,
-} from "@/app/(dashboard)/uat/execution-actions"
+} from "@/app/(dashboard)/validation/execution-actions"
 import {
   Play,
   CheckCircle,

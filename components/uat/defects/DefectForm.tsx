@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import type { DefectFormData } from "@/app/(dashboard)/uat/defect-actions"
+import type { DefectFormData } from "@/app/(dashboard)/validation/defect-actions"
 import type { DefectSeverity } from "@/types/database"
 import { Save, X, Bug } from "lucide-react"
 
