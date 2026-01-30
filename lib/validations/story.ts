@@ -1,10 +1,13 @@
 import { z } from "zod"
 
+export const STORY_TYPE_VALUES = ["user_story", "rule_update"] as const
+
 export const storyFormSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters").max(200, "Title must be less than 200 characters"),
   program_id: z.string().min(1, "Program is required"),
   status: z.enum(["Draft", "Internal Review", "Pending Client Review", "Approved", "In Development", "In UAT", "Needs Discussion", "Out of Scope"]),
   priority: z.enum(["Must Have", "Should Have", "Could Have", "Would Have"]).nullable().optional(),
+  story_type: z.enum(STORY_TYPE_VALUES).default("user_story"),
 
   // User story components (at least one required)
   user_story: z.string().max(2000, "User story must be less than 2000 characters").nullable().optional(),

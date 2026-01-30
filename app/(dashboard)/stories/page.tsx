@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
 export default async function StoriesPage() {
   const supabase = await createClient()
 
-  // Fetch stories with program info
+  // Fetch stories with program info (exclude soft-deleted)
   const { data: stories, error } = await supabase
     .from("user_stories")
     .select(`
@@ -21,9 +21,44 @@ export default async function StoriesPage() {
       category,
       program_id,
       roadmap_target,
-      updated_at
+      updated_at,
+      story_type
     `)
+    .is("deleted_at", null)
     .order("updated_at", { ascending: false })
+
+  // Fetch rule update details for rule_update stories
+  const ruleUpdateStoryIds = (stories || [])
+    .filter(s => s.story_type === "rule_update")
+    .map(s => s.story_id)
+
+  let ruleDetailsMap = new Map<string, { rule_type: string; target_rule: string }>()
+
+  if (ruleUpdateStoryIds.length > 0) {
+    const { data: ruleDetails } = await supabase
+      .from("rule_update_details")
+      .select("story_id, rule_type, target_rule")
+      .in("story_id", ruleUpdateStoryIds)
+
+    if (ruleDetails) {
+      ruleDetails.forEach(rd => {
+        ruleDetailsMap.set(rd.story_id, {
+          rule_type: rd.rule_type,
+          target_rule: rd.target_rule,
+        })
+      })
+    }
+  }
+
+  // Merge rule details into stories
+  const storiesWithRuleInfo = (stories || []).map(story => {
+    const ruleInfo = ruleDetailsMap.get(story.story_id)
+    return {
+      ...story,
+      rule_type: ruleInfo?.rule_type,
+      target_rule: ruleInfo?.target_rule,
+    }
+  })
 
   // Fetch programs for filter
   const { data: programs } = await supabase
@@ -36,9 +71,9 @@ export default async function StoriesPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">User Stories</h1>
+          <h1 className="text-2xl font-bold text-foreground">Stories</h1>
           <p className="text-muted-foreground mt-1">
-            Manage and track all user stories across programs
+            Manage and track all user stories and rule updates across programs
           </p>
         </div>
         <Link
@@ -52,7 +87,7 @@ export default async function StoriesPage() {
 
       {/* Stories List with Real-time Updates */}
       <StoriesListRealtime
-        initialStories={stories || []}
+        initialStories={storiesWithRuleInfo}
         programs={programs || []}
       />
     </div>

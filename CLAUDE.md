@@ -31,7 +31,193 @@ npm run lint     # Run ESLint
 
 ### Route Groups
 - `(auth)/` - Login page and auth callback (`/login`, `/auth/callback`)
-- `(dashboard)/` - Protected routes with sidebar layout (`/dashboard`, `/stories`, `/approvals`, `/admin/*`)
+- `(dashboard)/` - Protected routes with sidebar layout (`/dashboard`, `/stories`, `/approvals`, `/admin/*`, `/uat/*`)
+- `(tester)/` - External UAT tester portal (`/my-tests`, `/execute/*`, `/acknowledge/*`)
+
+## Module Architecture & Boundaries
+
+This is a **modular monolith** with clear boundaries between modules. Modules can share code through designated shared locations but should not import directly from each other.
+
+### Module Structure
+
+```
+app/
+├── (auth)/           # Authentication module
+├── (dashboard)/      # Admin/Manager dashboard module
+│   ├── stories/      # Requirements management
+│   ├── uat/          # UAT management (manager view)
+│   ├── reports/      # Reporting
+│   └── ...
+├── (tester)/         # External tester portal module
+│   ├── my-tests/     # Tester's assigned tests
+│   ├── execute/      # Test execution
+│   └── acknowledge/  # HIPAA acknowledgment
+└── api/              # API routes (shared)
+
+lib/                  # ✅ SHARED - Business logic, utilities
+components/           # ✅ SHARED - Reusable UI components
+hooks/                # ✅ SHARED - React hooks
+types/                # ✅ SHARED - TypeScript types
+```
+
+### Import Rules (ENFORCED BY ESLINT)
+
+| From Module | Can Import From |
+|-------------|----------------|
+| `(dashboard)/*` | `lib/`, `components/`, `hooks/`, `types/`, `app/api/` |
+| `(tester)/*` | `lib/`, `components/`, `hooks/`, `types/`, `app/api/` |
+| `(auth)/*` | `lib/`, `components/`, `hooks/`, `types/` |
+| `lib/*` | `types/` only |
+| `components/*` | `lib/`, `hooks/`, `types/` |
+
+### ❌ Forbidden Imports
+
+```typescript
+// WRONG: Dashboard importing from tester module
+import { something } from "@/app/(tester)/my-tests/actions"
+
+// WRONG: Tester importing from dashboard module
+import { something } from "@/app/(dashboard)/uat/actions"
+
+// WRONG: Cross-module action imports
+import { createStory } from "@/app/(dashboard)/stories/actions"  // from tester module
+```
+
+### ✅ Correct Pattern: Use Shared Code
+
+```typescript
+// CORRECT: Both modules import from shared lib
+import { createClient } from "@/lib/supabase/server"
+import { TEST_CASE_GENERATION_PROMPT } from "@/lib/ai/prompts"
+
+// CORRECT: Use shared components
+import { LoadingSpinner } from "@/components/ui/loading-spinner"
+
+// CORRECT: Use shared types
+import type { TestCaseStatus } from "@/types/database"
+```
+
+### When Code Needs to Be Shared
+
+If both `(dashboard)` and `(tester)` need the same functionality:
+
+1. **Business logic** → Move to `lib/` (e.g., `lib/uat/test-execution.ts`)
+2. **UI components** → Move to `components/` (e.g., `components/uat/test-step-executor.tsx`)
+3. **React hooks** → Move to `hooks/` (e.g., `hooks/use-execution-timer.ts`)
+4. **Types** → Already in `types/database.ts`
+
+### Module-Specific Components
+
+Each module can have its own components that are NOT shared:
+
+```
+components/
+├── dashboard/        # Dashboard-only components
+├── tester/           # Tester portal-only components
+├── ui/               # ✅ Shared UI primitives
+├── stories/          # ✅ Shared story components
+└── uat/              # ✅ Shared UAT components
+```
+
+### Server Actions Boundaries
+
+Server actions should be module-scoped:
+
+| Module | Actions Location | Used By |
+|--------|-----------------|---------|
+| Dashboard | `app/(dashboard)/*/actions.ts` | Dashboard pages only |
+| Tester | `app/(tester)/*/actions.ts` | Tester pages only |
+| Shared | `lib/actions/*.ts` | Both modules |
+
+**Example:** Test execution logic used by both modules should be in `lib/uat/execution-service.ts`, with thin action wrappers in each module.
+
+### Data Protection Rules
+
+1. **Soft-deleted stories** must be filtered with `.is("deleted_at", null)` in ALL queries
+2. **Approved stories** (status = "Approved", "In Development", "In UAT") cannot be deleted
+3. **All deletions** must log to `activity_log` before soft-delete
+
+## Service Layer Architecture
+
+The service layer (`lib/services/`) contains business logic that can be shared between modules.
+
+### Directory Structure
+
+```
+lib/
+├── config/              # Client/deployment configuration
+│   ├── client.ts        # Per-client settings (env vars)
+│   ├── modules.ts       # Module registry
+│   └── features.ts      # Feature flag definitions
+├── contracts/           # Interface definitions
+│   ├── story-contract.ts
+│   ├── test-case-contract.ts
+│   ├── execution-contract.ts
+│   └── notification-contract.ts
+├── services/            # Service implementations
+│   ├── test-case-service.ts
+│   └── notification-service.ts
+└── ...existing code...
+```
+
+### Using Services
+
+```typescript
+import { createClient } from '@/lib/supabase/server'
+import { TestCaseService, getTestCaseGenerator } from '@/lib/services'
+
+// In a server action or API route:
+const supabase = await createClient()
+const testCaseService = new TestCaseService(supabase)
+
+// Check if story has test cases
+const { data: hasTests } = await testCaseService.hasTestCases(storyId)
+
+// Generate test cases (respects feature flags)
+const generator = getTestCaseGenerator()
+if (await generator.isAvailable()) {
+  const result = await generator.generate({ title, description })
+}
+```
+
+### Configuration System
+
+Client configuration is loaded from environment variables:
+
+```bash
+# .env.local
+CLIENT_ID=providence
+CLIENT_NAME="Providence Health"
+
+# Feature toggles
+FEATURE_AI_ENABLED=true
+FEATURE_AUTO_GENERATE_TEST_CASES=true
+FEATURE_CROSS_VALIDATION=true
+
+# Compliance
+COMPLIANCE_REQUIRE_SIGNATURE=true
+```
+
+```typescript
+import { isFeatureEnabled, isModuleEnabled } from '@/lib/config'
+
+// Check features
+if (isFeatureEnabled('autoGenerateTestCases')) {
+  // Trigger auto-generation
+}
+
+// Check modules
+if (isModuleEnabled('riskAssessment')) {
+  // Show risk nav item
+}
+```
+
+### Adding New Services
+
+1. Define contract in `lib/contracts/new-contract.ts`
+2. Implement in `lib/services/new-service.ts`
+3. Export from `lib/services/index.ts`
+4. Use in both `(dashboard)` and `(tester)` modules
 
 ### Authentication Flow
 1. User enters email on `/login`
@@ -49,11 +235,16 @@ Four roles with hierarchical permissions:
 
 ### Database Schema (Key Tables)
 - `users` - User profiles with `role`, `auth_id` (links to Supabase Auth), `assigned_programs`
-- `user_stories` - Requirements with status workflow, locking for concurrent edits
+- `user_stories` - Requirements with status workflow, locking for concurrent edits, `story_type` ('user_story' | 'rule_update')
 - `programs` - Program/project containers (NOTE: uses `name` column, not `program_name`)
 - `story_comments` - Threaded discussions (RLS enforced)
 - `story_approvals` - Immutable approval audit trail (RLS enforced)
 - `story_versions` - Automatic version history via trigger (RLS enforced)
+
+### Rule Update Tables (Healthcare Rule Engine)
+- `rule_update_details` - 1:1 with user_stories for rule updates (rule_type, target_rule, change_id, change_type, quarter, effective_date, rule_description, change_summary)
+- `rule_update_test_cases` - Test cases for rule validation (profile_id auto-generated, platform P4M/Px4M, test_type POS/NEG, patient_conditions JSONB, test_steps JSONB)
+- `rule_update_history` - Immutable audit trail for FDA 21 CFR Part 11 compliance (action, previous_data, new_data, changed_by, ip_address)
 
 ### Programs Table Schema
 | Column | Type | Notes |
@@ -126,7 +317,22 @@ Future requirement to support multiple clients (e.g., Providence, Kaiser):
 - Design database schema with client isolation in mind
 
 ## Current Phase
-Phase 8: UX Improvements ✅ COMPLETE (Jan 28, 2026)
+Phase 9: Rule Update Story Type ✅ COMPLETE (Jan 30, 2026)
+- [x] Database migration for rule update tables (011_rule_update_schema.sql) ✅
+- [x] TypeScript types and Zod validation schemas ✅
+- [x] Constants module for platforms, rule types, change types ✅
+- [x] Server actions for rule update CRUD operations ✅
+- [x] Story type selector component ✅
+- [x] Rule update form with collapsible sections ✅
+- [x] Test case editor with patient conditions builder ✅
+- [x] Test steps editor ✅
+- [x] Rule update detail view ✅
+- [x] Stories list type filter and NCCN/TC badges ✅
+- [x] Conditional rendering in story detail page ✅
+- [x] New story wrapper with type selection flow ✅
+
+**Previous Phase:**
+Phase 8.5: UAT Fixes ✅ COMPLETE (Jan 29, 2026)
 - [x] Grouped sidebar navigation (Core / Workflow / Admin) ✅
 - [x] Gold left border indicator on active nav items ✅
 - [x] Fixed duplicate heading bug in header ✅
@@ -208,6 +414,9 @@ Phase 8: UX Improvements ✅ COMPLETE (Jan 28, 2026)
 ### Shared Config Modules
 - `lib/navigation.ts` - Grouped navigation config (Core / Workflow / Admin) with `getFilteredGroups(userRole)` helper. Single source of truth for sidebar and mobile nav.
 - `lib/badge-config.ts` - Status and priority badge config with lucide icons and color classes. Exports `getStatusBadge()` and `getPriorityBadge()` helpers.
+- `lib/rule-update/constants.ts` - Constants for rule update feature: STORY_TYPES, RULE_TYPES (NCCN, TC), PLATFORMS (P4M, Px4M), CHANGE_TYPES (MODIFIED, NEW, DEPRECATED), TEST_TYPES (POS, NEG), TEST_STATUSES.
+- `lib/validations/rule-update.ts` - Zod schemas for rule update forms, test cases, and test steps. Includes `extractRuleCode()` and `formatProfileId()` helpers.
+- `types/rule-update.ts` - TypeScript interfaces: RuleUpdateDetails, RuleTestCase, RuleUpdateHistoryEntry, RuleTestStep, PatientConditions.
 
 ### Stories
 - `components/stories/stories-list.tsx` - Client component with filtering, search, filter chips, mobile card view, virtual scrolling (50+ items), badge icons, enhanced empty states
@@ -219,8 +428,17 @@ Phase 8: UX Improvements ✅ COMPLETE (Jan 28, 2026)
 - `components/stories/version-history.tsx` - Expandable version list with diff comparison
 - `components/stories/related-stories-selector.tsx` - Search and select related/linked stories
 - `components/stories/story-relationships-display.tsx` - Display parent, child, and related story links
+- `components/stories/ai-acceptance-criteria.tsx` - AI-powered acceptance criteria generation
+- `components/stories/ai-relationship-suggestions.tsx` - AI-powered story relationship suggestions (works in both create and edit modes)
 - `components/stories/status-transition.tsx` - Interactive status dropdown with transition modal
 - `components/stories/approval-history-timeline.tsx` - Visual timeline of approvals and changes
+- `components/stories/story-type-selector.tsx` - User Story vs Rule Update selection UI
+- `components/stories/new-story-wrapper.tsx` - Client wrapper for type selection and conditional form rendering
+- `components/stories/rule-update-form.tsx` - Main form for creating/editing rule updates with collapsible sections
+- `components/stories/rule-update-detail-view.tsx` - Detail page component for rule update stories
+- `components/stories/rule-test-case-editor.tsx` - Modal form for adding/editing test cases with patient conditions
+- `components/stories/rule-test-case-list.tsx` - Display and manage test cases grouped by platform
+- `components/stories/rule-test-steps-editor.tsx` - Editor for test steps array with navigation paths and actions
 
 ### Settings
 - `components/settings/notification-settings-form.tsx` - Email notification opt-in/opt-out toggles
@@ -398,7 +616,48 @@ ALTER PUBLICATION supabase_realtime ADD TABLE story_comments;
 
 1. **TypeScript checking disabled in builds** - `next.config.js` has `typescript.ignoreBuildErrors: true` and `eslint.ignoreDuringBuilds: true`. Need to fix Supabase type inference and re-enable.
 
+2. **Components importing server actions directly** - Several shared components import server actions from `app/` instead of receiving them as props. This violates module boundaries but is currently allowed as warnings. Files to refactor:
+   - `components/stories/status-transition.tsx` → Pass `transitionStoryStatus` as prop
+   - `components/stories/story-actions.tsx` → Pass `deleteStory` as prop
+   - `components/stories/comments-section.tsx` → Pass comment actions as props
+   - `components/stories/ai-*.tsx` → Pass AI actions as props
+   - `components/uat/executions/*.tsx` → Pass execution actions as props
+   - `components/notifications/notification-bell.tsx` → Pass notification actions as props
+   - `components/settings/notification-settings-form.tsx` → Pass settings actions as props
+   - `components/activity/activity-feed.tsx` → Pass `getRecentActivities` as prop
+   - `components/tester/*.tsx` → Pass tester actions as props
+
+   **Proper pattern:** Create `lib/actions/` for shared server actions, or pass actions as props from page components.
+
+3. **Legacy `/tester` route (no parentheses)** - Old tester routes exist at `app/tester/` alongside new `app/(tester)/`. These legacy routes import directly from `app/(dashboard)/` which violates module boundaries. Should consolidate to `app/(tester)/` and use shared code in `lib/`. Files:
+   - `app/tester/page.tsx` → imports from `@/app/(dashboard)/uat/cycles/cycle-actions`
+   - `app/tester/cycle/[cycleId]/acknowledge/page.tsx` → imports from `@/app/(dashboard)/uat/cycles/cycle-actions`
+   - `app/tester/cycle/[cycleId]/test/[executionId]/page.tsx` → imports from `@/app/(dashboard)/uat/test-patients/test-patient-actions`
+
+## Changelog
+
+The project maintains a changelog at `CHANGELOG.md` following the [Keep a Changelog](https://keepachangelog.com/) format. Update this file when making significant changes:
+- **Added** for new features
+- **Changed** for changes in existing functionality
+- **Fixed** for bug fixes
+- **Removed** for removed features
+- **Security** for security fixes
+
 ## Future Features (Backlog)
+
+### UAT System Enhancements (Priority: High)
+**Full Roadmap:** `docs/UAT_ENHANCEMENTS_ROADMAP.md`
+
+Enable self-service, asynchronous testing for external testers:
+1. **Tester Portal** - Focused "My Executions" interface
+2. **Self-Service Invitation** - Magic link onboarding for external testers
+3. **Shareable Links** - Direct links to test assignments
+4. **Auto-Generate on Approval** - AI creates test cases when stories approved
+5. **AI Assignment Suggestions** - Smart test distribution
+
+Compliance: FDA 21 CFR Part 11, HIPAA, HITRUST
+
+---
 
 ### Risk Assessment Tool with AI Advisor
 Help users without software risk management experience evaluate requirements for prioritization and scheduling.

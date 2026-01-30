@@ -8,6 +8,8 @@ export type Json =
 
 export type UserRole = "Portfolio Manager" | "Program Manager" | "Developer" | "Admin" | "UAT Manager" | "UAT Tester"
 
+export type StoryType = "user_story" | "rule_update"
+
 export type StoryStatus =
   | "Draft"
   | "Internal Review"
@@ -54,6 +56,7 @@ export type NotificationType =
   | "test_assigned"
   | "defect_reported"
   | "execution_complete"
+  | "test_case_generated"
 
 export type RequirementCategory =
   | "Functional"
@@ -90,6 +93,18 @@ export type TestType = "functional" | "regression" | "integration" | "smoke" | "
 export type CycleStatus = "draft" | "active" | "completed" | "archived"
 
 export type DistributionMethod = "equal" | "weighted"
+
+// Compliance types
+export type ComplianceStatus =
+  | "not_applicable"
+  | "not_started"
+  | "planned"
+  | "in_progress"
+  | "implemented"
+  | "verified"
+  | "deferred"
+
+export type RequirementLevel = "required" | "addressable" | "recommended"
 
 export type AssignmentType = "primary" | "cross_validation"
 
@@ -285,6 +300,10 @@ export interface Database {
           stakeholder_approved_at: string | null
           locked_by: string | null
           locked_at: string | null
+          test_cases_auto_generated_at: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          story_type: StoryType
         }
         Insert: {
           story_id: string
@@ -322,6 +341,10 @@ export interface Database {
           stakeholder_approved_at?: string | null
           locked_by?: string | null
           locked_at?: string | null
+          test_cases_auto_generated_at?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          story_type?: StoryType
         }
         Update: {
           story_id?: string
@@ -359,6 +382,10 @@ export interface Database {
           stakeholder_approved_at?: string | null
           locked_by?: string | null
           locked_at?: string | null
+          test_cases_auto_generated_at?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          story_type?: StoryType
         }
       }
       story_comments: {
@@ -1091,6 +1118,303 @@ export interface Database {
           created_at?: string
         }
       }
+      compliance_frameworks: {
+        Row: {
+          framework_id: string
+          code: string
+          name: string
+          description: string | null
+          version: string | null
+          regulatory_body: string | null
+          effective_date: string | null
+          is_active: boolean
+          display_order: number
+          metadata: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          framework_id?: string
+          code: string
+          name: string
+          description?: string | null
+          version?: string | null
+          regulatory_body?: string | null
+          effective_date?: string | null
+          is_active?: boolean
+          display_order?: number
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          framework_id?: string
+          code?: string
+          name?: string
+          description?: string | null
+          version?: string | null
+          regulatory_body?: string | null
+          effective_date?: string | null
+          is_active?: boolean
+          display_order?: number
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      compliance_controls: {
+        Row: {
+          control_id: string
+          framework_id: string
+          control_code: string
+          title: string
+          description: string | null
+          category: string | null
+          subcategory: string | null
+          requirement_type: string | null
+          is_critical: boolean
+          applicability_criteria: Json | null
+          guidance_notes: string | null
+          evidence_requirements: string | null
+          display_order: number
+          parent_control_id: string | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          control_id?: string
+          framework_id: string
+          control_code: string
+          title: string
+          description?: string | null
+          category?: string | null
+          subcategory?: string | null
+          requirement_type?: string | null
+          is_critical?: boolean
+          applicability_criteria?: Json | null
+          guidance_notes?: string | null
+          evidence_requirements?: string | null
+          display_order?: number
+          parent_control_id?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          control_id?: string
+          framework_id?: string
+          control_code?: string
+          title?: string
+          description?: string | null
+          category?: string | null
+          subcategory?: string | null
+          requirement_type?: string | null
+          is_critical?: boolean
+          applicability_criteria?: Json | null
+          guidance_notes?: string | null
+          evidence_requirements?: string | null
+          display_order?: number
+          parent_control_id?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      story_compliance_mappings: {
+        Row: {
+          mapping_id: string
+          story_id: string
+          control_id: string
+          status: string
+          implementation_notes: string | null
+          evidence_links: Json
+          target_date: string | null
+          verified_at: string | null
+          verified_by: string | null
+          verification_notes: string | null
+          risk_assessment: string | null
+          created_at: string
+          updated_at: string
+          created_by: string | null
+        }
+        Insert: {
+          mapping_id?: string
+          story_id: string
+          control_id: string
+          status?: string
+          implementation_notes?: string | null
+          evidence_links?: Json
+          target_date?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+          verification_notes?: string | null
+          risk_assessment?: string | null
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+        }
+        Update: {
+          mapping_id?: string
+          story_id?: string
+          control_id?: string
+          status?: string
+          implementation_notes?: string | null
+          evidence_links?: Json
+          target_date?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+          verification_notes?: string | null
+          risk_assessment?: string | null
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+        }
+      }
+      compliance_mapping_history: {
+        Row: {
+          history_id: string
+          mapping_id: string
+          story_id: string
+          control_id: string
+          action: string
+          previous_status: string | null
+          new_status: string | null
+          previous_data: Json | null
+          new_data: Json | null
+          change_reason: string | null
+          changed_by: string
+          changed_by_name: string | null
+          changed_by_email: string | null
+          ip_address: string | null
+          user_agent: string | null
+          session_id: string | null
+          created_at: string
+        }
+        Insert: {
+          history_id?: string
+          mapping_id: string
+          story_id: string
+          control_id: string
+          action: string
+          previous_status?: string | null
+          new_status?: string | null
+          previous_data?: Json | null
+          new_data?: Json | null
+          change_reason?: string | null
+          changed_by: string
+          changed_by_name?: string | null
+          changed_by_email?: string | null
+          ip_address?: string | null
+          user_agent?: string | null
+          session_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          history_id?: string
+          mapping_id?: string
+          story_id?: string
+          control_id?: string
+          action?: string
+          previous_status?: string | null
+          new_status?: string | null
+          previous_data?: Json | null
+          new_data?: Json | null
+          change_reason?: string | null
+          changed_by?: string
+          changed_by_name?: string | null
+          changed_by_email?: string | null
+          ip_address?: string | null
+          user_agent?: string | null
+          session_id?: string | null
+          created_at?: string
+        }
+      }
+      program_compliance_settings: {
+        Row: {
+          id: string
+          program_id: string
+          framework_id: string
+          is_enabled: boolean
+          effective_date: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          program_id: string
+          framework_id: string
+          is_enabled?: boolean
+          effective_date?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          program_id?: string
+          framework_id?: string
+          is_enabled?: boolean
+          effective_date?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+        }
+      }
+      compliance_reports: {
+        Row: {
+          report_id: string
+          program_id: string | null
+          framework_id: string | null
+          report_type: string
+          title: string
+          description: string | null
+          report_data: Json
+          file_url: string | null
+          generated_at: string
+          generated_by: string
+          parameters: Json | null
+          is_archived: boolean
+          archived_at: string | null
+          archived_by: string | null
+        }
+        Insert: {
+          report_id?: string
+          program_id?: string | null
+          framework_id?: string | null
+          report_type: string
+          title: string
+          description?: string | null
+          report_data: Json
+          file_url?: string | null
+          generated_at?: string
+          generated_by: string
+          parameters?: Json | null
+          is_archived?: boolean
+          archived_at?: string | null
+          archived_by?: string | null
+        }
+        Update: {
+          report_id?: string
+          program_id?: string | null
+          framework_id?: string | null
+          report_type?: string
+          title?: string
+          description?: string | null
+          report_data?: Json
+          file_url?: string | null
+          generated_at?: string
+          generated_by?: string
+          parameters?: Json | null
+          is_archived?: boolean
+          archived_at?: string | null
+          archived_by?: string | null
+        }
+      }
     }
     Functions: {
       get_user_role: {
@@ -1162,6 +1486,21 @@ export interface Database {
           failed_count: number
           blocked_count: number
           has_agreement: boolean
+        }[]
+      }
+      get_compliance_summary: {
+        Args: {
+          p_program_id?: string
+        }
+        Returns: {
+          framework_code: string
+          framework_name: string
+          total_controls: number
+          critical_controls: number
+          stories_mapped: number
+          verified_count: number
+          implemented_count: number
+          completion_percentage: number
         }[]
       }
     }

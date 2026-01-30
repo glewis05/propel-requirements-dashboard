@@ -1,7 +1,7 @@
 # Requirements Dashboard - Development Status
 
-**Last Updated:** January 28, 2026
-**Session:** Phase 8 Complete - UX Improvements
+**Last Updated:** January 30, 2026
+**Session:** Phase 9 - Rule Update Story Type
 
 ---
 
@@ -551,7 +551,115 @@ Enable Realtime on tables in Dashboard > Database > Replication:
 - `app/(dashboard)/stories/page.tsx` - Prominent New Story button
 - `app/(dashboard)/dashboard/page.tsx` - Badge icons on recent stories
 
-### Phase 9: Polish & Launch
+### Phase 8.5: UAT Fixes ✅ COMPLETE (Jan 29, 2026)
+- [x] Fixed tile order inconsistency (detail view now matches form view order) ✅
+- [x] Fixed Related Stories dropdown being cut off by container ✅
+- [x] Enabled AI relationship suggestions in create mode ✅
+- [x] Created CHANGELOG.md following Keep a Changelog format ✅
+- [x] Updated all documentation with lessons learned ✅
+
+**Files Modified:**
+- `app/(dashboard)/stories/[id]/page.tsx` - Reordered Story Relationships before Acceptance Criteria
+- `components/stories/collapsible-section.tsx` - Added `overflow-visible` to prevent dropdown clipping
+- `components/stories/ai-relationship-suggestions.tsx` - Made `storyId` optional, added `programId` and `onSetParent` props
+- `app/(dashboard)/stories/ai-actions.ts` - Updated `getRelationshipSuggestions` to handle null storyId
+- `components/stories/story-form.tsx` - Enabled AI component in create mode with callbacks
+
+**New Files:**
+- `CHANGELOG.md` - Project changelog following Keep a Changelog format
+
+### Phase 8.5: UAT Fixes ✅ COMPLETE (Jan 29, 2026)
+**Stakeholder UAT Feedback:** Three UX issues identified during user acceptance testing
+
+**Issue 1: Inconsistent Tile Order**
+- Detail view had Acceptance Criteria before Story Relationships
+- Form view (new/edit) had Story Relationships before Acceptance Criteria
+- **Fix:** Reordered detail view to match form view (Story Relationships → Acceptance Criteria)
+- **File:** `app/(dashboard)/stories/[id]/page.tsx`
+
+**Issue 2: Related Stories Dropdown Cutoff**
+- Dropdown in Related Stories selector was being clipped by parent container
+- Users could scroll through items but couldn't see the text
+- **Fix:** Added `overflow-visible` to CollapsibleSection card and content wrapper
+- **File:** `components/stories/collapsible-section.tsx`
+
+**Issue 3: AI Buttons Missing in Create Mode**
+- AI relationship suggestions button only appeared in edit mode
+- Users expected AI assistance when creating new stories
+- **Fix:** Made AIRelationshipSuggestions work in both create and edit modes
+- **Files Modified:**
+  - `components/stories/ai-relationship-suggestions.tsx` - Made `storyId` optional, added `programId` and `onSetParent` props
+  - `app/(dashboard)/stories/ai-actions.ts` - Updated `getRelationshipSuggestions` to handle null storyId
+  - `components/stories/story-form.tsx` - Enabled AI component in create mode with callbacks
+
+**Documentation Updates:**
+- Created `CHANGELOG.md` - Retroactive changelog following Keep a Changelog format
+- Updated `Project_Progress.md` - Added UAT fixes and lessons learned
+- Updated `CLAUDE.md` - Added new component changes and current phase
+
+### Phase 9: Rule Update Story Type ✅ COMPLETE (Jan 30, 2026)
+**Stakeholder Request:** Support NCCN/TC healthcare rule engine updates with structured test cases and FDA 21 CFR Part 11 compliant audit trails.
+
+**Story Type Differentiation:**
+- **User Story** (traditional) - existing form with role/capability/benefit
+- **Rule Update** - new form with rule details, patient conditions, and structured test cases
+
+**Platforms Supported:**
+- **P4M** = Preventione4ME
+- **Px4M** = Precision4ME
+
+**Database Schema (Migration 011_rule_update_schema.sql):**
+
+| Table | Purpose |
+|-------|---------|
+| `rule_update_details` | 1:1 with story for rule metadata (rule_type, target_rule, change_id, change_type, quarter, effective_date) |
+| `rule_update_test_cases` | Test cases with auto-generated profile IDs, patient conditions (PHX/FDR/SDR), test steps |
+| `rule_update_history` | Immutable audit trail for compliance (action, previous_data, new_data, changed_by, ip_address) |
+
+**Profile ID Auto-Generation Format:**
+```
+TP-{RULE_CODE}-{TEST_TYPE}-{SEQUENCE}-{PLATFORM}
+```
+Example: `TP-PROS007-POS-01-P4M`
+
+**New Files Created:**
+| File | Purpose |
+|------|---------|
+| `supabase/migrations/011_rule_update_schema.sql` | Database schema for rule updates |
+| `types/rule-update.ts` | TypeScript interfaces |
+| `lib/validations/rule-update.ts` | Zod validation schemas |
+| `lib/rule-update/constants.ts` | Constants (platforms, rule types, change types, test types) |
+| `app/(dashboard)/stories/rule-update-actions.ts` | Server actions for rule updates |
+| `components/stories/story-type-selector.tsx` | User Story vs Rule Update choice UI |
+| `components/stories/new-story-wrapper.tsx` | Client wrapper for type selection flow |
+| `components/stories/rule-update-form.tsx` | Main rule update form with collapsible sections |
+| `components/stories/rule-update-detail-view.tsx` | Detail page for rule update stories |
+| `components/stories/rule-test-case-editor.tsx` | Test case form with patient conditions |
+| `components/stories/rule-test-case-list.tsx` | Test cases display grouped by platform |
+| `components/stories/rule-test-steps-editor.tsx` | Test steps editor |
+
+**Files Modified:**
+| File | Changes |
+|------|---------|
+| `types/database.ts` | Added `StoryType`, `story_type` to user_stories types |
+| `lib/validations/story.ts` | Added `story_type` field |
+| `app/(dashboard)/stories/new/page.tsx` | Integrated NewStoryWrapper with type selection |
+| `app/(dashboard)/stories/[id]/page.tsx` | Conditional rendering based on story_type |
+| `components/stories/stories-list.tsx` | Added type filter dropdown, NCCN/TC badges |
+| `app/(dashboard)/stories/page.tsx` | Fetches story_type and rule details for list display |
+
+**Server Actions Added:**
+- `createRuleUpdateStory(data)` - Create story + details + test cases in transaction
+- `updateRuleUpdateDetails(storyId, data)` - Update rule details with audit trail
+- `getRuleUpdateDetails(storyId)` - Fetch rule details
+- `getRuleTestCases(storyId)` - Fetch test cases for a story
+- `addRuleTestCase(storyId, data)` - Add test case with auto-generated profile ID
+- `updateRuleTestCase(testId, data)` - Update test case with audit trail
+- `deleteRuleTestCase(testId)` - Remove test case
+- `generateProfileId(storyId, platform, testType)` - Generate unique profile ID
+- `getRuleUpdateHistory(storyId)` - Get audit trail
+
+### Phase 10: Polish & Launch
 - [ ] Comprehensive testing
 - [ ] Performance optimization
 - [ ] Security audit
@@ -561,6 +669,37 @@ Enable Realtime on tables in Dashboard > Database > Replication:
 ---
 
 ## Future Features (Backlog)
+
+### UAT System Enhancements (Priority: High)
+**Added:** January 29, 2026
+**Full Roadmap:** `docs/UAT_ENHANCEMENTS_ROADMAP.md`
+
+**Goal:** Enable self-service, asynchronous testing by external business users and technical validators.
+
+**Enhancements Needed:**
+1. **Tester Portal ("My Executions")** - Focused interface for testers to view/execute assigned tests
+2. **Self-Service Tester Invitation** - Magic link invitations, auto-create user accounts
+3. **Unique Shareable Links** - Direct links to test assignments in notification emails
+4. **Auto-Generate Test Cases on Approval** - AI generates test cases when stories reach "Approved" status
+5. **AI-Assisted Test Division** - Smart suggestions for distributing tests among testers
+
+**Compliance Requirements:**
+- FDA 21 CFR Part 11 (electronic signatures, audit trails)
+- HIPAA (test patient data, acknowledgments)
+- HITRUST (access control, encryption, logging)
+
+**Database Migrations Required:**
+- `008_tester_invitations.sql` - Invitation tracking table
+- `009_execution_enhancements.sql` - Pause/resume support (if needed)
+
+**Priority Order:**
+1. Tester Portal (enable testers immediately)
+2. Self-Service Invitation (onboard external testers)
+3. Shareable Links (improve UX)
+4. Auto-Generate on Approval (reduce manual work)
+5. AI Assignment Suggestions (optimize distribution)
+
+---
 
 ### Risk Assessment Tool with AI Advisor
 **Added:** January 25, 2026
@@ -861,6 +1000,29 @@ For complex schema changes on existing tables:
 
 This allows you to verify step 1 succeeded before running step 2.
 
+### Session: January 29, 2026 (Phase 8.5 UAT Fixes)
+
+**24. UI Consistency Between Views**
+When creating both a display view and a form view for the same entity, ensure sections/tiles appear in the same order. Users build mental models based on spatial layout, and inconsistent ordering creates confusion.
+
+**25. Dropdown Overflow and Positioning**
+Dropdowns using `position: absolute` with `z-index` can still be clipped if any ancestor has `overflow: hidden` or `overflow: auto`. Solutions:
+- Add `overflow: visible` to all ancestor containers
+- Use a portal to render dropdown at document body level
+- Use `position: fixed` and calculate position dynamically
+
+**26. Feature Parity Across Modes**
+Users expect the same features in both create and edit modes. When an AI-powered feature works in edit mode, plan upfront how it will work in create mode (even if the implementation differs). The AIRelationshipSuggestions component required refactoring to accept form data directly instead of requiring a saved storyId.
+
+**27. Server Action Flexibility**
+Design server actions to accept optional parameters for different use cases. The `getRelationshipSuggestions` action was originally designed only for existing stories. Making `storyId` nullable and accepting inline story data enabled create mode support without a separate action.
+
+**28. Maintain a Changelog**
+Start a changelog early in the project. Following the Keep a Changelog format provides:
+- Clear history for stakeholders and auditors
+- Easy reference during UAT and bug triage
+- Documentation of breaking changes for upgrades
+
 ### Session: January 28, 2026 (Phase 8 UX Improvements)
 
 **21. Deduplicate Navigation Config**
@@ -896,14 +1058,15 @@ The header component had an `<h1>` tag for "Requirements Dashboard", but each pa
 ## Files to Review Before Resuming
 
 1. `CLAUDE.md` - Quick reference for Claude Code sessions
-2. `Requirements_Dashboard_Upgrade_Project_Plan.md` - Full project specification
-3. `supabase/migrations/001_interactive_dashboard_schema.sql` - Database changes
-4. `types/database.ts` - TypeScript types for all tables
-5. `tailwind.config.ts` - Branding configuration
-6. `middleware.ts` - Route protection logic
-7. `.eslintrc.json` - ESLint configuration
-8. `lib/navigation.ts` - Shared navigation config
-9. `lib/badge-config.ts` - Shared badge icon/color config
+2. `CHANGELOG.md` - Version history and recent changes
+3. `Requirements_Dashboard_Upgrade_Project_Plan.md` - Full project specification
+4. `supabase/migrations/001_interactive_dashboard_schema.sql` - Database changes
+5. `types/database.ts` - TypeScript types for all tables
+6. `tailwind.config.ts` - Branding configuration
+7. `middleware.ts` - Route protection logic
+8. `.eslintrc.json` - ESLint configuration
+9. `lib/navigation.ts` - Shared navigation config
+10. `lib/badge-config.ts` - Shared badge icon/color config
 
 ---
 

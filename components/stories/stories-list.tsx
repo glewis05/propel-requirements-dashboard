@@ -2,9 +2,17 @@
 
 import { useState, useMemo, useRef } from "react"
 import Link from "next/link"
-import { Search, ChevronRight, Calendar, Layers, X, FileText, Plus } from "lucide-react"
+import { Search, ChevronRight, Calendar, Layers, X, FileText, Plus, Settings2 } from "lucide-react"
 import { useVirtualizer } from "@tanstack/react-virtual"
 import { getStatusBadge, getPriorityBadge } from "@/lib/badge-config"
+import { ComplianceBadgeGroup } from "@/components/compliance"
+import { RULE_TYPE_LABELS } from "@/lib/rule-update/constants"
+import type { RuleType, StoryType } from "@/types/rule-update"
+
+interface ComplianceFrameworkCount {
+  code: string
+  count: number
+}
 
 interface Story {
   story_id: string
@@ -16,6 +24,10 @@ interface Story {
   program_id: string
   roadmap_target: string | null
   updated_at: string
+  compliance_frameworks?: ComplianceFrameworkCount[]
+  story_type?: StoryType
+  rule_type?: RuleType
+  target_rule?: string
 }
 
 interface Program {
@@ -33,7 +45,7 @@ const VIRTUAL_SCROLL_THRESHOLD = 50
 
 // Row heights for virtual scrolling
 const TABLE_ROW_HEIGHT = 73 // px
-const CARD_HEIGHT = 140 // px
+const CARD_HEIGHT = 160 // px - increased for rule badge
 
 // Status badge component with icon
 function StatusBadge({ status, size = "default" }: { status: string; size?: "default" | "sm" }) {
@@ -61,8 +73,24 @@ function PriorityBadge({ priority, size = "default" }: { priority: string; size?
   )
 }
 
+// Rule type badge component
+function RuleTypeBadge({ ruleType, targetRule, size = "default" }: { ruleType: RuleType; targetRule?: string; size?: "default" | "sm" }) {
+  const padding = size === "sm" ? "px-2 py-0.5" : "px-2 py-1"
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full ${padding} text-xs font-medium bg-secondary/10 text-secondary border border-secondary/20`}>
+      <Settings2 className="h-3 w-3" />
+      {RULE_TYPE_LABELS[ruleType]}
+      {targetRule && size !== "sm" && (
+        <span className="font-mono text-secondary/70 ml-1">{targetRule}</span>
+      )}
+    </span>
+  )
+}
+
 // Mobile Card Component
 function StoryCard({ story, programs }: { story: Story; programs: Program[] }) {
+  const isRuleUpdate = story.story_type === "rule_update"
+
   return (
     <Link
       href={`/stories/${story.story_id}`}
@@ -73,9 +101,16 @@ function StoryCard({ story, programs }: { story: Story; programs: Program[] }) {
           <p className="text-sm font-medium text-foreground line-clamp-2">
             {story.title}
           </p>
-          <p className="text-xs font-mono text-muted-foreground mt-1">
-            {story.story_id}
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-xs font-mono text-muted-foreground">
+              {story.story_id}
+            </p>
+            {isRuleUpdate && story.target_rule && (
+              <p className="text-xs font-mono text-secondary">
+                {story.target_rule}
+              </p>
+            )}
+          </div>
         </div>
         <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
       </div>
@@ -85,6 +120,16 @@ function StoryCard({ story, programs }: { story: Story; programs: Program[] }) {
         <StatusBadge status={story.status} size="sm" />
         {story.priority && (
           <PriorityBadge priority={story.priority} size="sm" />
+        )}
+        {isRuleUpdate && story.rule_type && (
+          <RuleTypeBadge ruleType={story.rule_type} size="sm" />
+        )}
+        {story.compliance_frameworks && story.compliance_frameworks.length > 0 && (
+          <ComplianceBadgeGroup
+            frameworks={story.compliance_frameworks}
+            size="sm"
+            maxDisplay={2}
+          />
         )}
       </div>
 
@@ -105,6 +150,8 @@ function StoryCard({ story, programs }: { story: Story; programs: Program[] }) {
 
 // Desktop Table Row Component
 function StoryTableRow({ story, programs }: { story: Story; programs: Program[] }) {
+  const isRuleUpdate = story.story_type === "rule_update"
+
   return (
     <tr className="hover:bg-muted/50 transition-colors border-b border-border last:border-b-0">
       <td className="px-6 py-4">
@@ -112,9 +159,21 @@ function StoryTableRow({ story, programs }: { story: Story; programs: Program[] 
           <p className="text-sm font-medium text-foreground hover:text-primary transition-colors">
             {story.title}
           </p>
-          <p className="text-xs font-mono text-muted-foreground mt-0.5">
-            {story.story_id}
-          </p>
+          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+            <p className="text-xs font-mono text-muted-foreground">
+              {story.story_id}
+            </p>
+            {isRuleUpdate && story.rule_type && (
+              <RuleTypeBadge ruleType={story.rule_type} targetRule={story.target_rule} size="sm" />
+            )}
+            {story.compliance_frameworks && story.compliance_frameworks.length > 0 && (
+              <ComplianceBadgeGroup
+                frameworks={story.compliance_frameworks}
+                size="sm"
+                maxDisplay={3}
+              />
+            )}
+          </div>
         </Link>
       </td>
       <td className="px-6 py-4">
@@ -132,7 +191,7 @@ function StoryTableRow({ story, programs }: { story: Story; programs: Program[] 
       </td>
       <td className="px-6 py-4">
         <span className="text-sm text-muted-foreground">
-          {story.roadmap_target || "\u2014"}
+          {isRuleUpdate ? (story.target_rule || "\u2014") : (story.roadmap_target || "\u2014")}
         </span>
       </td>
       <td className="px-6 py-4">
@@ -188,6 +247,7 @@ export function StoriesList({ stories, programs }: StoriesListProps) {
   const [programFilter, setProgramFilter] = useState("")
   const [statusFilter, setStatusFilter] = useState("")
   const [priorityFilter, setPriorityFilter] = useState("")
+  const [storyTypeFilter, setStoryTypeFilter] = useState("")
 
   // Refs for virtual scroll containers
   const tableContainerRef = useRef<HTMLDivElement>(null)
@@ -196,13 +256,14 @@ export function StoriesList({ stories, programs }: StoriesListProps) {
   // Filter stories based on all criteria
   const filteredStories = useMemo(() => {
     return stories.filter((story) => {
-      // Search filter - check title, story_id, and user_story
+      // Search filter - check title, story_id, user_story, and target_rule
       const searchLower = searchQuery.toLowerCase()
       const matchesSearch =
         searchQuery === "" ||
         story.title.toLowerCase().includes(searchLower) ||
         story.story_id.toLowerCase().includes(searchLower) ||
-        (story.user_story && story.user_story.toLowerCase().includes(searchLower))
+        (story.user_story && story.user_story.toLowerCase().includes(searchLower)) ||
+        (story.target_rule && story.target_rule.toLowerCase().includes(searchLower))
 
       // Program filter
       const matchesProgram =
@@ -216,9 +277,15 @@ export function StoriesList({ stories, programs }: StoriesListProps) {
       const matchesPriority =
         priorityFilter === "" || story.priority === priorityFilter
 
-      return matchesSearch && matchesProgram && matchesStatus && matchesPriority
+      // Story type filter
+      const matchesStoryType =
+        storyTypeFilter === "" ||
+        (storyTypeFilter === "user_story" && (story.story_type === "user_story" || !story.story_type)) ||
+        (storyTypeFilter === "rule_update" && story.story_type === "rule_update")
+
+      return matchesSearch && matchesProgram && matchesStatus && matchesPriority && matchesStoryType
     })
-  }, [stories, searchQuery, programFilter, statusFilter, priorityFilter])
+  }, [stories, searchQuery, programFilter, statusFilter, priorityFilter, storyTypeFilter])
 
   // Determine if virtual scrolling should be used
   const useVirtualScroll = filteredStories.length > VIRTUAL_SCROLL_THRESHOLD
@@ -252,10 +319,11 @@ export function StoriesList({ stories, programs }: StoriesListProps) {
     setProgramFilter("")
     setStatusFilter("")
     setPriorityFilter("")
+    setStoryTypeFilter("")
   }
 
   const hasActiveFilters =
-    searchQuery || programFilter || statusFilter || priorityFilter
+    searchQuery || programFilter || statusFilter || priorityFilter || storyTypeFilter
 
   // Build active filter chips
   const activeFilterChips: { label: string; value: string; onClear: () => void }[] = []
@@ -288,6 +356,13 @@ export function StoriesList({ stories, programs }: StoriesListProps) {
       onClear: () => setPriorityFilter(""),
     })
   }
+  if (storyTypeFilter) {
+    activeFilterChips.push({
+      label: "Type",
+      value: storyTypeFilter === "user_story" ? "User Story" : "Rule Update",
+      onClear: () => setStoryTypeFilter(""),
+    })
+  }
 
   return (
     <div className="space-y-4">
@@ -297,7 +372,7 @@ export function StoriesList({ stories, programs }: StoriesListProps) {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search by title, ID, or description..."
+            placeholder="Search by title, ID, description, or rule..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-10 py-2 rounded-md border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
@@ -313,6 +388,15 @@ export function StoriesList({ stories, programs }: StoriesListProps) {
           )}
         </div>
         <div className="flex gap-2 flex-wrap">
+          <select
+            value={storyTypeFilter}
+            onChange={(e) => setStoryTypeFilter(e.target.value)}
+            className="rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option value="">All Types</option>
+            <option value="user_story">User Stories</option>
+            <option value="rule_update">Rule Updates</option>
+          </select>
           <select
             value={programFilter}
             onChange={(e) => setProgramFilter(e.target.value)}
@@ -465,7 +549,7 @@ export function StoriesList({ stories, programs }: StoriesListProps) {
                     Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-[12%]">
-                    Roadmap
+                    Target
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-[11%]">
                     Updated
@@ -491,6 +575,7 @@ export function StoriesList({ stories, programs }: StoriesListProps) {
                     <tbody>
                       {tableVirtualizer.getVirtualItems().map((virtualItem) => {
                         const story = filteredStories[virtualItem.index]
+                        const isRuleUpdate = story.story_type === "rule_update"
                         return (
                           <tr
                             key={story.story_id}
@@ -511,9 +596,21 @@ export function StoriesList({ stories, programs }: StoriesListProps) {
                                 <p className="text-sm font-medium text-foreground hover:text-primary transition-colors truncate">
                                   {story.title}
                                 </p>
-                                <p className="text-xs font-mono text-muted-foreground mt-0.5">
-                                  {story.story_id}
-                                </p>
+                                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                  <p className="text-xs font-mono text-muted-foreground">
+                                    {story.story_id}
+                                  </p>
+                                  {isRuleUpdate && story.rule_type && (
+                                    <RuleTypeBadge ruleType={story.rule_type} size="sm" />
+                                  )}
+                                  {story.compliance_frameworks && story.compliance_frameworks.length > 0 && (
+                                    <ComplianceBadgeGroup
+                                      frameworks={story.compliance_frameworks}
+                                      size="sm"
+                                      maxDisplay={2}
+                                    />
+                                  )}
+                                </div>
                               </Link>
                             </td>
                             <td className="px-6 py-4 w-[15%]">
@@ -531,7 +628,7 @@ export function StoriesList({ stories, programs }: StoriesListProps) {
                             </td>
                             <td className="px-6 py-4 w-[12%]">
                               <span className="text-sm text-muted-foreground">
-                                {story.roadmap_target || "\u2014"}
+                                {isRuleUpdate ? (story.target_rule || "\u2014") : (story.roadmap_target || "\u2014")}
                               </span>
                             </td>
                             <td className="px-6 py-4 w-[11%]">
@@ -574,7 +671,7 @@ export function StoriesList({ stories, programs }: StoriesListProps) {
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Roadmap
+                  Target
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Updated

@@ -10,7 +10,8 @@ import {
   Target,
   Layers,
   Calendar,
-  User
+  User,
+  Settings2,
 } from "lucide-react"
 import { CollapsibleSection } from "@/components/stories/collapsible-section"
 import { CommentsSection } from "@/components/stories/comments-section"
@@ -19,7 +20,13 @@ import { VersionHistory } from "@/components/stories/version-history"
 import { StoryRelationshipsWithAI } from "@/components/stories/story-relationships-with-ai"
 import { StatusTransitionWrapper } from "@/components/stories/status-transition-wrapper"
 import { ApprovalHistoryTimeline } from "@/components/stories/approval-history-timeline"
-import type { StoryStatus, UserRole, ApprovalType, ApprovalStatus } from "@/types/database"
+import { StoryComplianceSection } from "@/components/stories/story-compliance-section"
+import { RuleUpdateDetailView } from "@/components/stories/rule-update-detail-view"
+import { getStoryComplianceMappings, getMappingHistory } from "@/app/(dashboard)/compliance/actions"
+import { getRuleUpdateDetails, getRuleTestCases } from "@/app/(dashboard)/stories/rule-update-actions"
+import type { StoryStatus, UserRole, ApprovalType, ApprovalStatus, StoryType } from "@/types/database"
+import { RULE_TYPE_LABELS } from "@/lib/rule-update/constants"
+import type { RuleType } from "@/types/rule-update"
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'
@@ -32,16 +39,19 @@ export default async function StoryDetailPage({ params }: Props) {
   const { id } = await params
   const supabase = await createClient()
 
-  // Fetch story details
+  // Fetch story details (exclude soft-deleted)
   const { data: story, error } = await supabase
     .from("user_stories")
     .select("*")
     .eq("story_id", id)
+    .is("deleted_at", null)
     .single()
 
   if (error || !story) {
     notFound()
   }
+
+  const isRuleUpdate = story.story_type === "rule_update"
 
   // Fetch program name
   const { data: program } = await supabase
@@ -120,9 +130,21 @@ export default async function StoryDetailPage({ params }: Props) {
     canDelete = userRole === "Admin"
   }
 
-  // Fetch parent story if exists
+  // Fetch rule update specific data if applicable
+  let ruleDetails = null
+  let ruleTestCases = null
+  if (isRuleUpdate) {
+    const [detailsResult, testCasesResult] = await Promise.all([
+      getRuleUpdateDetails(id),
+      getRuleTestCases(id),
+    ])
+    ruleDetails = detailsResult.success ? detailsResult.data : null
+    ruleTestCases = testCasesResult.success ? testCasesResult.data : []
+  }
+
+  // Fetch parent story if exists (only for user stories)
   let parentStory = null
-  if (story.parent_story_id) {
+  if (!isRuleUpdate && story.parent_story_id) {
     const { data: parentData } = await supabase
       .from("user_stories")
       .select("story_id, title, status, program_id")
@@ -137,76 +159,88 @@ export default async function StoryDetailPage({ params }: Props) {
     }
   }
 
-  // Fetch child stories (stories that have this story as parent)
-  const { data: childrenData } = await supabase
-    .from("user_stories")
-    .select("story_id, title, status, program_id")
-    .eq("parent_story_id", id)
-    .order("title")
-
-  const childStories = (childrenData || []).map(s => ({
-    ...s,
-    program_name: program?.name || undefined,
-  }))
-
-  // Fetch related stories (from this story's related_stories array)
-  const relatedStoryIds = (story.related_stories as string[]) || []
-  let outgoingRelated: Array<{ story_id: string; title: string; status: string; program_id: string; program_name?: string }> = []
-
-  if (relatedStoryIds.length > 0) {
-    const { data: outgoingData } = await supabase
+  // Fetch child stories (only for user stories)
+  let childStories: Array<{ story_id: string; title: string; status: string; program_id: string; program_name?: string }> = []
+  if (!isRuleUpdate) {
+    const { data: childrenData } = await supabase
       .from("user_stories")
       .select("story_id, title, status, program_id")
-      .in("story_id", relatedStoryIds)
+      .eq("parent_story_id", id)
+      .is("deleted_at", null)
+      .order("title")
 
-    // Fetch program names for related stories
-    const programIds = Array.from(new Set((outgoingData || []).map((s: { program_id: string }) => s.program_id)))
-    const { data: programsData } = await supabase
-      .from("programs")
-      .select("program_id, name")
-      .in("program_id", programIds)
-
-    const programNameMap = new Map((programsData || []).map(p => [p.program_id, p.name]))
-
-    outgoingRelated = (outgoingData || []).map(s => ({
+    childStories = (childrenData || []).map(s => ({
       ...s,
-      program_name: programNameMap.get(s.program_id) || undefined,
+      program_name: program?.name || undefined,
     }))
   }
 
-  // Fetch stories that link TO this story (bidirectional relationship)
-  const { data: incomingData } = await supabase.rpc("get_stories_linking_to", {
-    p_story_id: id,
-  })
+  // Fetch related stories (only for user stories)
+  let relatedStories: Array<{ story_id: string; title: string; status: string; program_id: string; program_name?: string }> = []
+  if (!isRuleUpdate) {
+    const relatedStoryIds = (story.related_stories as string[]) || []
+    let outgoingRelated: Array<{ story_id: string; title: string; status: string; program_id: string; program_name?: string }> = []
 
-  let incomingRelated: Array<{ story_id: string; title: string; status: string; program_id: string; program_name?: string }> = []
-  if (incomingData && incomingData.length > 0) {
-    // Fetch program names for incoming related stories
-    const incomingProgramIds = Array.from(new Set(incomingData.map((s: { program_id: string }) => s.program_id)))
-    const { data: incomingProgramsData } = await supabase
-      .from("programs")
-      .select("program_id, name")
-      .in("program_id", incomingProgramIds)
+    if (relatedStoryIds.length > 0) {
+      const { data: outgoingData } = await supabase
+        .from("user_stories")
+        .select("story_id, title, status, program_id")
+        .in("story_id", relatedStoryIds)
+        .is("deleted_at", null)
 
-    const incomingProgramMap = new Map((incomingProgramsData || []).map(p => [p.program_id, p.name]))
+      const programIds = Array.from(new Set((outgoingData || []).map((s: { program_id: string }) => s.program_id)))
+      const { data: programsData } = await supabase
+        .from("programs")
+        .select("program_id, name")
+        .in("program_id", programIds)
 
-    incomingRelated = incomingData.map((s: { story_id: string; title: string; status: string; program_id: string }) => ({
-      ...s,
-      program_name: incomingProgramMap.get(s.program_id) || undefined,
-    }))
-  }
+      const programNameMap = new Map((programsData || []).map(p => [p.program_id, p.name]))
 
-  // Merge and dedupe related stories (bidirectional)
-  const relatedStoriesMap = new Map<string, { story_id: string; title: string; status: string; program_id: string; program_name?: string }>()
-  for (const s of outgoingRelated) {
-    relatedStoriesMap.set(s.story_id, s)
-  }
-  for (const s of incomingRelated) {
-    if (!relatedStoriesMap.has(s.story_id)) {
+      outgoingRelated = (outgoingData || []).map(s => ({
+        ...s,
+        program_name: programNameMap.get(s.program_id) || undefined,
+      }))
+    }
+
+    const { data: incomingData } = await supabase.rpc("get_stories_linking_to", {
+      p_story_id: id,
+    })
+
+    let incomingRelated: Array<{ story_id: string; title: string; status: string; program_id: string; program_name?: string }> = []
+    if (incomingData && incomingData.length > 0) {
+      const incomingProgramIds = Array.from(new Set(incomingData.map((s: { program_id: string }) => s.program_id)))
+      const { data: incomingProgramsData } = await supabase
+        .from("programs")
+        .select("program_id, name")
+        .in("program_id", incomingProgramIds)
+
+      const incomingProgramMap = new Map((incomingProgramsData || []).map(p => [p.program_id, p.name]))
+
+      incomingRelated = incomingData.map((s: { story_id: string; title: string; status: string; program_id: string }) => ({
+        ...s,
+        program_name: incomingProgramMap.get(s.program_id) || undefined,
+      }))
+    }
+
+    const relatedStoriesMap = new Map<string, { story_id: string; title: string; status: string; program_id: string; program_name?: string }>()
+    for (const s of outgoingRelated) {
       relatedStoriesMap.set(s.story_id, s)
     }
+    for (const s of incomingRelated) {
+      if (!relatedStoriesMap.has(s.story_id)) {
+        relatedStoriesMap.set(s.story_id, s)
+      }
+    }
+    relatedStories = Array.from(relatedStoriesMap.values())
   }
-  const relatedStories = Array.from(relatedStoriesMap.values())
+
+  // Fetch compliance mappings (for both types)
+  const [complianceMappingsResult, complianceHistoryResult] = await Promise.all([
+    getStoryComplianceMappings(id),
+    getMappingHistory({ storyId: id, limit: 20 }),
+  ])
+  const complianceMappings = complianceMappingsResult.success ? complianceMappingsResult.data || [] : []
+  const complianceHistory = complianceHistoryResult.success ? complianceHistoryResult.data || [] : []
 
   // Helper function for priority badge colors
   const getPriorityColor = (priority: string) => {
@@ -257,7 +291,13 @@ export default async function StoryDetailPage({ params }: Props) {
                   {story.priority}
                 </span>
               )}
-              {story.is_technical && (
+              {isRuleUpdate && ruleDetails && (
+                <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium bg-secondary/10 text-secondary border border-secondary/20">
+                  <Settings2 className="h-3 w-3" />
+                  {RULE_TYPE_LABELS[ruleDetails.rule_type as RuleType]}
+                </span>
+              )}
+              {!isRuleUpdate && story.is_technical && (
                 <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-secondary/10 text-secondary border border-secondary/20">
                   Technical
                 </span>
@@ -283,7 +323,12 @@ export default async function StoryDetailPage({ params }: Props) {
               <Layers className="h-4 w-4" />
               {program?.name || story.program_id}
             </span>
-            {story.roadmap_target && (
+            {isRuleUpdate && ruleDetails && (
+              <span className="flex items-center gap-1 font-mono">
+                {ruleDetails.target_rule}
+              </span>
+            )}
+            {!isRuleUpdate && story.roadmap_target && (
               <span className="flex items-center gap-1">
                 <Target className="h-4 w-4" />
                 {story.roadmap_target}
@@ -301,129 +346,150 @@ export default async function StoryDetailPage({ params }: Props) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-4">
-          {/* User Story */}
-          <CollapsibleSection
-            title="User Story"
-            icon={<FileText className="h-5 w-5 text-primary" />}
-            defaultOpen={true}
-          >
-            {story.user_story ? (
-              <p className="text-foreground whitespace-pre-wrap leading-relaxed">
-                {story.user_story}
-              </p>
-            ) : (
-              <p className="text-muted-foreground italic">No user story defined.</p>
-            )}
+          {isRuleUpdate ? (
+            /* Rule Update Content */
+            <RuleUpdateDetailView
+              storyId={id}
+              initialDetails={ruleDetails || undefined}
+              initialTestCases={ruleTestCases || []}
+            />
+          ) : (
+            /* User Story Content */
+            <>
+              {/* User Story */}
+              <CollapsibleSection
+                title="User Story"
+                icon={<FileText className="h-5 w-5 text-primary" />}
+                defaultOpen={true}
+              >
+                {story.user_story ? (
+                  <p className="text-foreground whitespace-pre-wrap leading-relaxed">
+                    {story.user_story}
+                  </p>
+                ) : (
+                  <p className="text-muted-foreground italic">No user story defined.</p>
+                )}
 
-            {/* Show role/capability/benefit if present */}
-            {(story.role || story.capability || story.benefit) && (
-              <div className="mt-4 pt-4 border-t border-border grid grid-cols-1 md:grid-cols-3 gap-4">
-                {story.role && (
-                  <div>
-                    <dt className="text-xs font-medium text-muted-foreground uppercase">As a</dt>
-                    <dd className="text-sm text-foreground mt-1">{story.role}</dd>
+                {/* Show role/capability/benefit if present */}
+                {(story.role || story.capability || story.benefit) && (
+                  <div className="mt-4 pt-4 border-t border-border grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {story.role && (
+                      <div>
+                        <dt className="text-xs font-medium text-muted-foreground uppercase">As a</dt>
+                        <dd className="text-sm text-foreground mt-1">{story.role}</dd>
+                      </div>
+                    )}
+                    {story.capability && (
+                      <div>
+                        <dt className="text-xs font-medium text-muted-foreground uppercase">I want to</dt>
+                        <dd className="text-sm text-foreground mt-1">{story.capability}</dd>
+                      </div>
+                    )}
+                    {story.benefit && (
+                      <div>
+                        <dt className="text-xs font-medium text-muted-foreground uppercase">So that</dt>
+                        <dd className="text-sm text-foreground mt-1">{story.benefit}</dd>
+                      </div>
+                    )}
                   </div>
                 )}
-                {story.capability && (
-                  <div>
-                    <dt className="text-xs font-medium text-muted-foreground uppercase">I want to</dt>
-                    <dd className="text-sm text-foreground mt-1">{story.capability}</dd>
+              </CollapsibleSection>
+
+              {/* Story Relationships */}
+              <StoryRelationshipsWithAI
+                storyId={story.story_id}
+                storyTitle={story.title}
+                storyDescription={story.user_story || `${story.role || ""} ${story.capability || ""} ${story.benefit || ""}`.trim()}
+                parentStory={parentStory}
+                childStories={childStories}
+                relatedStories={relatedStories}
+                currentProgramId={story.program_id}
+                currentParentStoryId={story.parent_story_id}
+              />
+
+              {/* Acceptance Criteria */}
+              <CollapsibleSection
+                title="Acceptance Criteria"
+                icon={<CheckSquare className="h-5 w-5 text-success" />}
+                defaultOpen={false}
+              >
+                {story.acceptance_criteria ? (
+                  <div className="prose prose-sm max-w-none text-foreground">
+                    <pre className="whitespace-pre-wrap font-sans text-sm bg-muted/30 p-4 rounded-md">
+                      {story.acceptance_criteria}
+                    </pre>
                   </div>
+                ) : (
+                  <p className="text-muted-foreground italic">No acceptance criteria defined.</p>
                 )}
-                {story.benefit && (
-                  <div>
-                    <dt className="text-xs font-medium text-muted-foreground uppercase">So that</dt>
-                    <dd className="text-sm text-foreground mt-1">{story.benefit}</dd>
+              </CollapsibleSection>
+
+              {/* Success Metrics */}
+              {story.success_metrics && (
+                <CollapsibleSection
+                  title="Success Metrics"
+                  icon={<Target className="h-5 w-5 text-warning" />}
+                  defaultOpen={false}
+                >
+                  <p className="text-foreground whitespace-pre-wrap">
+                    {story.success_metrics}
+                  </p>
+                </CollapsibleSection>
+              )}
+
+              {/* Internal Notes (Admin only view) */}
+              {story.internal_notes && (
+                <CollapsibleSection
+                  title="Internal Notes"
+                  icon={<AlertCircle className="h-5 w-5 text-warning" />}
+                  defaultOpen={false}
+                >
+                  <div className="bg-warning/5 border border-warning/20 rounded-md p-4">
+                    <p className="text-foreground whitespace-pre-wrap text-sm">
+                      {story.internal_notes}
+                    </p>
                   </div>
-                )}
-              </div>
-            )}
-          </CollapsibleSection>
+                </CollapsibleSection>
+              )}
 
-          {/* Acceptance Criteria */}
-          <CollapsibleSection
-            title="Acceptance Criteria"
-            icon={<CheckSquare className="h-5 w-5 text-success" />}
-            defaultOpen={false}
-          >
-            {story.acceptance_criteria ? (
-              <div className="prose prose-sm max-w-none text-foreground">
-                <pre className="whitespace-pre-wrap font-sans text-sm bg-muted/30 p-4 rounded-md">
-                  {story.acceptance_criteria}
-                </pre>
-              </div>
-            ) : (
-              <p className="text-muted-foreground italic">No acceptance criteria defined.</p>
-            )}
-          </CollapsibleSection>
+              {/* Meeting Context */}
+              {story.meeting_context && (
+                <CollapsibleSection
+                  title="Meeting Context"
+                  icon={<User className="h-5 w-5 text-muted-foreground" />}
+                  defaultOpen={false}
+                >
+                  <p className="text-foreground whitespace-pre-wrap text-sm">
+                    {story.meeting_context}
+                  </p>
+                </CollapsibleSection>
+              )}
 
-          {/* Success Metrics */}
-          {story.success_metrics && (
-            <CollapsibleSection
-              title="Success Metrics"
-              icon={<Target className="h-5 w-5 text-warning" />}
-              defaultOpen={false}
-            >
-              <p className="text-foreground whitespace-pre-wrap">
-                {story.success_metrics}
-              </p>
-            </CollapsibleSection>
+              {/* Client Feedback */}
+              {story.client_feedback && (
+                <CollapsibleSection
+                  title="Client Feedback"
+                  icon={<MessageSquare className="h-5 w-5 text-primary" />}
+                  defaultOpen={false}
+                >
+                  <p className="text-foreground whitespace-pre-wrap text-sm">
+                    {story.client_feedback}
+                  </p>
+                </CollapsibleSection>
+              )}
+            </>
           )}
 
-          {/* Internal Notes (Admin only view) */}
-          {story.internal_notes && (
-            <CollapsibleSection
-              title="Internal Notes"
-              icon={<AlertCircle className="h-5 w-5 text-warning" />}
-              defaultOpen={false}
-            >
-              <div className="bg-warning/5 border border-warning/20 rounded-md p-4">
-                <p className="text-foreground whitespace-pre-wrap text-sm">
-                  {story.internal_notes}
-                </p>
-              </div>
-            </CollapsibleSection>
-          )}
-
-          {/* Meeting Context */}
-          {story.meeting_context && (
-            <CollapsibleSection
-              title="Meeting Context"
-              icon={<User className="h-5 w-5 text-muted-foreground" />}
-              defaultOpen={false}
-            >
-              <p className="text-foreground whitespace-pre-wrap text-sm">
-                {story.meeting_context}
-              </p>
-            </CollapsibleSection>
-          )}
-
-          {/* Client Feedback */}
-          {story.client_feedback && (
-            <CollapsibleSection
-              title="Client Feedback"
-              icon={<MessageSquare className="h-5 w-5 text-primary" />}
-              defaultOpen={false}
-            >
-              <p className="text-foreground whitespace-pre-wrap text-sm">
-                {story.client_feedback}
-              </p>
-            </CollapsibleSection>
-          )}
-
-          {/* Story Relationships */}
-          <StoryRelationshipsWithAI
-            storyId={story.story_id}
-            storyTitle={story.title}
-            storyDescription={story.user_story || `${story.role || ""} ${story.capability || ""} ${story.benefit || ""}`.trim()}
-            parentStory={parentStory}
-            childStories={childStories}
-            relatedStories={relatedStories}
-            currentProgramId={story.program_id}
-            currentParentStoryId={story.parent_story_id}
+          {/* Compliance Section - shown for both types */}
+          <StoryComplianceSection
+            storyId={id}
+            mappings={complianceMappings}
+            history={complianceHistory}
+            userRole={userRole}
+            isOpen={complianceMappings.length > 0}
           />
 
-          {/* Comments with Real-time Updates */}
+          {/* Comments with Real-time Updates - shown for both types */}
           <CommentsSection
             storyId={id}
             initialComments={commentsWithNames}
@@ -440,6 +506,14 @@ export default async function StoryDetailPage({ params }: Props) {
             <dl className="space-y-4">
               <div>
                 <dt className="text-xs font-medium text-muted-foreground uppercase">
+                  Story Type
+                </dt>
+                <dd className="text-sm text-foreground mt-1">
+                  {isRuleUpdate ? "Rule Update" : "User Story"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-medium text-muted-foreground uppercase">
                   Program
                 </dt>
                 <dd className="text-sm text-foreground mt-1">
@@ -449,22 +523,46 @@ export default async function StoryDetailPage({ params }: Props) {
                   )}
                 </dd>
               </div>
-              <div>
-                <dt className="text-xs font-medium text-muted-foreground uppercase">
-                  Category
-                </dt>
-                <dd className="text-sm text-foreground mt-1">
-                  {story.category_full || story.category || "—"}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs font-medium text-muted-foreground uppercase">
-                  Roadmap Target
-                </dt>
-                <dd className="text-sm text-foreground mt-1">
-                  {story.roadmap_target || "—"}
-                </dd>
-              </div>
+              {!isRuleUpdate && (
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground uppercase">
+                    Category
+                  </dt>
+                  <dd className="text-sm text-foreground mt-1">
+                    {story.category_full || story.category || "—"}
+                  </dd>
+                </div>
+              )}
+              {!isRuleUpdate && (
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground uppercase">
+                    Roadmap Target
+                  </dt>
+                  <dd className="text-sm text-foreground mt-1">
+                    {story.roadmap_target || "—"}
+                  </dd>
+                </div>
+              )}
+              {isRuleUpdate && ruleDetails && (
+                <>
+                  <div>
+                    <dt className="text-xs font-medium text-muted-foreground uppercase">
+                      Quarter
+                    </dt>
+                    <dd className="text-sm text-foreground mt-1">
+                      {ruleDetails.quarter}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-medium text-muted-foreground uppercase">
+                      Change ID
+                    </dt>
+                    <dd className="text-sm text-foreground mt-1 font-mono">
+                      {ruleDetails.change_id}
+                    </dd>
+                  </div>
+                </>
+              )}
               <div>
                 <dt className="text-xs font-medium text-muted-foreground uppercase">
                   Version

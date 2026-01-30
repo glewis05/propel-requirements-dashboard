@@ -13,6 +13,7 @@ export interface StoryListItem {
   program_id: string
   roadmap_target: string | null
   updated_at: string
+  deleted_at?: string | null
 }
 
 export function useStoriesSubscription(initialStories: StoryListItem[]) {
@@ -20,6 +21,10 @@ export function useStoriesSubscription(initialStories: StoryListItem[]) {
 
   const handleInsert = useCallback((newStory: StoryListItem) => {
     setStories((prev) => {
+      // Don't insert soft-deleted stories
+      if (newStory.deleted_at) {
+        return prev
+      }
       // Check if story already exists (avoid duplicates)
       if (prev.some((s) => s.story_id === newStory.story_id)) {
         return prev
@@ -31,6 +36,10 @@ export function useStoriesSubscription(initialStories: StoryListItem[]) {
 
   const handleUpdate = useCallback((updatedStory: StoryListItem) => {
     setStories((prev) => {
+      // If story was soft-deleted, remove it from the list
+      if (updatedStory.deleted_at) {
+        return prev.filter((story) => story.story_id !== updatedStory.story_id)
+      }
       return prev.map((story) =>
         story.story_id === updatedStory.story_id ? updatedStory : story
       )
