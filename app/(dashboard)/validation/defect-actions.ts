@@ -78,8 +78,8 @@ export async function createDefect(data: DefectFormData) {
     return { success: false, error: error.message }
   }
 
-  revalidatePath("/uat/defects")
-  revalidatePath("/uat")
+  revalidatePath("/validation/defects")
+  revalidatePath("/validation")
   return { success: true, defectId: defect?.defect_id }
 }
 
@@ -121,8 +121,8 @@ export async function updateDefect(defectId: string, data: Partial<DefectFormDat
     return { success: false, error: error.message }
   }
 
-  revalidatePath("/uat/defects")
-  revalidatePath(`/uat/defects/${defectId}`)
+  revalidatePath("/validation/defects")
+  revalidatePath(`/validation/defects/${defectId}`)
   return { success: true }
 }
 
@@ -189,9 +189,9 @@ export async function transitionDefect(
     return { success: false, error: error.message }
   }
 
-  revalidatePath("/uat/defects")
-  revalidatePath(`/uat/defects/${defectId}`)
-  revalidatePath("/uat")
+  revalidatePath("/validation/defects")
+  revalidatePath(`/validation/defects/${defectId}`)
+  revalidatePath("/validation")
   return { success: true }
 }
 
@@ -229,8 +229,8 @@ export async function assignDefect(defectId: string, assignedTo: string) {
     return { success: false, error: error.message }
   }
 
-  revalidatePath("/uat/defects")
-  revalidatePath(`/uat/defects/${defectId}`)
+  revalidatePath("/validation/defects")
+  revalidatePath(`/validation/defects/${defectId}`)
   return { success: true }
 }
 

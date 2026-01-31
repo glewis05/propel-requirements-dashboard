@@ -71,8 +71,8 @@ export async function createTestCase(data: TestCaseFormData) {
     return { success: false, error: error.message }
   }
 
-  revalidatePath("/uat/test-cases")
-  revalidatePath("/uat")
+  revalidatePath("/validation/test-cases")
+  revalidatePath("/validation")
   return { success: true, testCaseId: testCase?.test_case_id }
 }
 
@@ -120,9 +120,9 @@ export async function updateTestCase(testCaseId: string, data: Partial<TestCaseF
     return { success: false, error: error.message }
   }
 
-  revalidatePath("/uat/test-cases")
-  revalidatePath(`/uat/test-cases/${testCaseId}`)
-  revalidatePath("/uat")
+  revalidatePath("/validation/test-cases")
+  revalidatePath(`/validation/test-cases/${testCaseId}`)
+  revalidatePath("/validation")
   return { success: true }
 }
 
@@ -155,8 +155,8 @@ export async function archiveTestCase(testCaseId: string) {
     return { success: false, error: error.message }
   }
 
-  revalidatePath("/uat/test-cases")
-  revalidatePath("/uat")
+  revalidatePath("/validation/test-cases")
+  revalidatePath("/validation")
   return { success: true }
 }
 
@@ -194,8 +194,8 @@ export async function reviewTestCase(testCaseId: string) {
     return { success: false, error: error.message }
   }
 
-  revalidatePath("/uat/test-cases")
-  revalidatePath(`/uat/test-cases/${testCaseId}`)
+  revalidatePath("/validation/test-cases")
+  revalidatePath(`/validation/test-cases/${testCaseId}`)
   return { success: true }
 }
 

@@ -68,7 +68,7 @@ export async function createTestPatient(data: TestPatientFormData) {
     return { success: false, error: error.message }
   }
 
-  revalidatePath("/uat/test-patients")
+  revalidatePath("/validation/test-patients")
   return { success: true, patientId: patient?.patient_id }
 }
 
@@ -117,7 +117,7 @@ export async function updateTestPatient(
     return { success: false, error: error.message }
   }
 
-  revalidatePath("/uat/test-patients")
+  revalidatePath("/validation/test-patients")
   return { success: true }
 }
 
@@ -155,7 +155,7 @@ export async function deactivateTestPatient(patientId: string) {
     return { success: false, error: error.message }
   }
 
-  revalidatePath("/uat/test-patients")
+  revalidatePath("/validation/test-patients")
   return { success: true }
 }
 
@@ -193,7 +193,7 @@ export async function reactivateTestPatient(patientId: string) {
     return { success: false, error: error.message }
   }
 
-  revalidatePath("/uat/test-patients")
+  revalidatePath("/validation/test-patients")
   return { success: true }
 }
 
@@ -240,7 +240,7 @@ export async function deleteTestPatient(patientId: string) {
     return { success: false, error: error.message }
   }
 
-  revalidatePath("/uat/test-patients")
+  revalidatePath("/validation/test-patients")
   return { success: true }
 }
 

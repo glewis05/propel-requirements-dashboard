@@ -139,8 +139,8 @@ export async function saveGeneratedTestCases(
     return { success: false, error: result.error }
   }
 
-  revalidatePath("/uat/test-cases")
-  revalidatePath("/uat")
+  revalidatePath("/validation/test-cases")
+  revalidatePath("/validation")
   return { success: true, count: result.data?.count || 0 }
 }
 
@@ -244,8 +244,8 @@ export async function autoGenerateTestCasesForStory(
   })
 
   // Revalidate paths
-  revalidatePath("/uat/test-cases")
-  revalidatePath("/uat")
+  revalidatePath("/validation/test-cases")
+  revalidatePath("/validation")
   revalidatePath(`/stories/${storyId}`)
 
   return { success: true, count: testCases.length }

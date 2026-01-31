@@ -166,7 +166,7 @@ export default function TestPatientsPage() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Link
-              href="/uat"
+              href="/validation"
               className="text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" />

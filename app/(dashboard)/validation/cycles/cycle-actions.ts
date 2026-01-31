@@ -71,7 +71,7 @@ export async function createCycle(data: CycleFormData) {
     return { success: false, error: error.message }
   }
 
-  revalidatePath("/uat/cycles")
+  revalidatePath("/validation/cycles")
   return { success: true, cycleId: cycle?.cycle_id }
 }
 
@@ -138,8 +138,8 @@ export async function updateCycle(
     return { success: false, error: error.message }
   }
 
-  revalidatePath("/uat/cycles")
-  revalidatePath(`/uat/cycles/${cycleId}`)
+  revalidatePath("/validation/cycles")
+  revalidatePath(`/validation/cycles/${cycleId}`)
   return { success: true }
 }
 
@@ -177,8 +177,8 @@ export async function updateCycleStatus(cycleId: string, status: CycleStatus) {
     return { success: false, error: error.message }
   }
 
-  revalidatePath("/uat/cycles")
-  revalidatePath(`/uat/cycles/${cycleId}`)
+  revalidatePath("/validation/cycles")
+  revalidatePath(`/validation/cycles/${cycleId}`)
   return { success: true }
 }
 
@@ -219,8 +219,8 @@ export async function lockCycle(cycleId: string) {
     return { success: false, error: error.message }
   }
 
-  revalidatePath("/uat/cycles")
-  revalidatePath(`/uat/cycles/${cycleId}`)
+  revalidatePath("/validation/cycles")
+  revalidatePath(`/validation/cycles/${cycleId}`)
   return { success: true }
 }
 
@@ -267,7 +267,7 @@ export async function deleteCycle(cycleId: string) {
     return { success: false, error: error.message }
   }
 
-  revalidatePath("/uat/cycles")
+  revalidatePath("/validation/cycles")
   return { success: true }
 }
 

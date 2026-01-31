@@ -65,8 +65,8 @@ export async function createExecution(data: {
     return { success: false, error: error.message }
   }
 
-  revalidatePath("/uat/executions")
-  revalidatePath("/uat")
+  revalidatePath("/validation/executions")
+  revalidatePath("/validation")
   return { success: true, executionId: execution?.execution_id }
 }
 
@@ -117,8 +117,8 @@ export async function assignExecution(data: {
     return { success: false, error: error.message }
   }
 
-  revalidatePath("/uat/executions")
-  revalidatePath("/uat")
+  revalidatePath("/validation/executions")
+  revalidatePath("/validation")
   return { success: true, count: data.test_case_ids.length }
 }
 
@@ -176,8 +176,8 @@ export async function startExecution(executionId: string) {
     return { success: false, error: error.message }
   }
 
-  revalidatePath("/uat/executions")
-  revalidatePath(`/uat/executions/${executionId}`)
+  revalidatePath("/validation/executions")
+  revalidatePath(`/validation/executions/${executionId}`)
   return { success: true }
 }
 
@@ -244,7 +244,7 @@ export async function updateStepResult(
     return { success: false, error: error.message }
   }
 
-  revalidatePath(`/uat/executions/${executionId}`)
+  revalidatePath(`/validation/executions/${executionId}`)
   return { success: true }
 }
 
@@ -306,9 +306,9 @@ export async function completeExecution(
     return { success: false, error: error.message }
   }
 
-  revalidatePath("/uat/executions")
-  revalidatePath(`/uat/executions/${executionId}`)
-  revalidatePath("/uat")
+  revalidatePath("/validation/executions")
+  revalidatePath(`/validation/executions/${executionId}`)
+  revalidatePath("/validation")
   return { success: true }
 }
 
@@ -360,9 +360,9 @@ export async function verifyExecution(executionId: string) {
     return { success: false, error: error.message }
   }
 
-  revalidatePath("/uat/executions")
-  revalidatePath(`/uat/executions/${executionId}`)
-  revalidatePath("/uat")
+  revalidatePath("/validation/executions")
+  revalidatePath(`/validation/executions/${executionId}`)
+  revalidatePath("/validation")
   return { success: true }
 }
 

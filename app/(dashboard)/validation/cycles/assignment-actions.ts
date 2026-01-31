@@ -483,9 +483,9 @@ export async function executeAssignment(config: AssignmentConfig): Promise<{
     // Don't fail - executions were created successfully
   }
 
-  revalidatePath(`/uat/cycles/${config.cycleId}`)
-  revalidatePath(`/uat/cycles/${config.cycleId}/assign`)
-  revalidatePath("/uat/executions")
+  revalidatePath(`/validation/cycles/${config.cycleId}`)
+  revalidatePath(`/validation/cycles/${config.cycleId}/assign`)
+  revalidatePath("/validation/executions")
 
   return { success: true, executionCount: executions.length }
 }
