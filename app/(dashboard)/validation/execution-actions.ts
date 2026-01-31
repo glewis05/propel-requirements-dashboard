@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import type { ExecutionStatus, StepResult, Database } from "@/types/database"
-import { canTransitionExecution } from "@/lib/uat/execution-transitions"
+import { canTransitionExecution } from "@/lib/validation/execution-transitions"
 import type { UserRole } from "@/types/database"
 
 // Type aliases for test_executions table operations

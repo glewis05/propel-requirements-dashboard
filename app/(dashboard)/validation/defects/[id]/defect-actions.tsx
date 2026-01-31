@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { transitionDefect, assignDefect } from "@/app/(dashboard)/validation/defect-actions"
-import { getAllowedDefectTransitions } from "@/lib/uat/execution-transitions"
+import { getAllowedDefectTransitions } from "@/lib/validation/execution-transitions"
 import type { DefectStatus, UserRole } from "@/types/database"
 import { UserPlus } from "lucide-react"
 

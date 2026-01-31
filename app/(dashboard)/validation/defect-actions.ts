@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import type { Database, DefectSeverity, DefectStatus, UserRole } from "@/types/database"
-import { getAllowedDefectTransitions } from "@/lib/uat/execution-transitions"
+import { getAllowedDefectTransitions } from "@/lib/validation/execution-transitions"
 
 // Type aliases for table types
 type DefectInsert = Database['public']['Tables']['defects']['Insert']
