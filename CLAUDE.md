@@ -31,8 +31,12 @@ npm run lint     # Run ESLint
 
 ### Route Groups
 - `(auth)/` - Login page and auth callback (`/login`, `/auth/callback`)
-- `(dashboard)/` - Protected routes with sidebar layout (`/dashboard`, `/stories`, `/approvals`, `/admin/*`, `/uat/*`)
-- `(tester)/` - External UAT tester portal (`/my-tests`, `/execute/*`, `/acknowledge/*`)
+- `(dashboard)/` - Protected admin routes with sidebar layout (`/dashboard`, `/stories`, `/approvals`, `/admin/*`, `/validation/*`, `/clarify/*`, `/compliance/*`)
+- `(tester)/` - External UAT tester portal (`/my-tests`, `/execute/*`, `/acknowledge/*`, `/my-defects/*`)
+
+**Route Renames (Jan 30, 2026):**
+- `/uat/*` → `/validation/*` (Test cases, executions, defects management)
+- `/questions/*` → `/clarify/*` (Q&A workflow)
 
 ## Module Architecture & Boundaries
 
@@ -226,6 +230,24 @@ if (isModuleEnabled('riskAssessment')) {
 4. Middleware (`lib/supabase/middleware.ts`) refreshes sessions and protects routes
 5. Dashboard layout fetches user profile by matching `auth_id` to `users.auth_id`
 
+### Role-Based Middleware Routing
+
+The middleware (`lib/supabase/middleware.ts`) implements automatic role-based routing:
+
+**Tester Routes** (UAT Tester only):
+- `/my-tests`, `/execute`, `/acknowledge`, `/my-defects`, `/tester-help`
+
+**Admin Routes** (blocked for UAT Testers):
+- `/dashboard`, `/stories`, `/approvals`, `/admin`, `/validation`, `/clarify`, `/compliance`, `/reports`, `/activity`, `/settings`
+
+**Routing Logic:**
+1. UAT Testers accessing admin routes → Redirected to `/my-tests`
+2. UAT Testers accessing `/` or `/login` (when authenticated) → Redirected to `/my-tests`
+3. Non-testers accessing `/` or `/login` (when authenticated) → Redirected to `/dashboard`
+4. Non-testers can still access tester routes (for debugging/testing purposes)
+
+This enables a single Vercel deployment to serve both the admin dashboard and tester portal based on user role.
+
 ### Role-Based Access Control
 Four roles with hierarchical permissions:
 - **Admin:** Full access, can delete anything
@@ -292,7 +314,12 @@ Building with CI/CD in mind from the start:
 
 ## Branding
 
-The dashboard uses Propel Health brand styling with "Powered by Propel Health Platform" tagline.
+The application is branded as **TraceWell** with the tagline "The Compliance Backbone for Healthcare Innovation".
+
+**Logo:** Helix Check - DNA helix integrated with checkmark (`components/ui/tracewell-logo.tsx`)
+- Teal helix strand (#0C8181)
+- Gold checkmark (#F9BC15)
+- White interweave strand
 
 **Brand Colors:**
 - Primary Teal: #0C8181
@@ -302,10 +329,10 @@ The dashboard uses Propel Health brand styling with "Powered by Propel Health Pl
 **Brand Font:** Montserrat (Google Fonts)
 
 **Key Branding Locations:**
-- Login page: Navy background, gold accents
-- Sidebar: Navy background, gold logo icon, gold left border on active nav item
-- Mobile nav: Navy background, gold logo icon, gold left border on active nav item
-- Footer tagline: "Powered by Propel Health Platform"
+- Login page: Navy background with TracewellLogo, gold accents, tagline
+- Sidebar: Navy background, TracewellLogo, "TraceWell" title with "Compliance Backbone" subtitle
+- Mobile nav: Navy background, TracewellLogo, gold left border on active nav item
+- App metadata: "TraceWell | Compliance Backbone"
 
 ## Multi-Client Considerations
 Future requirement to support multiple clients (e.g., Providence, Kaiser):
@@ -458,6 +485,7 @@ Phase 8.5: UAT Fixes ✅ COMPLETE (Jan 29, 2026)
 - `components/ui/skeleton.tsx` - Skeleton loaders (Skeleton, SkeletonText, SkeletonCard, SkeletonTableRow, SkeletonStoriesTable, SkeletonStatsGrid)
 - `components/ui/mention-input.tsx` - @mentions autocomplete textarea with user search
 - `components/ui/loading-spinner.tsx` - Loading spinner with sizes (sm, md, lg) and LoadingPage component
+- `components/ui/tracewell-logo.tsx` - TraceWell Helix Check logo with size variants (sm, md, lg)
 
 ### Layout
 - `components/layout/sidebar.tsx` - Role-based grouped navigation (desktop) with gold active indicator
@@ -466,11 +494,17 @@ Phase 8.5: UAT Fixes ✅ COMPLETE (Jan 29, 2026)
 
 ## Sidebar Navigation Groups
 Navigation items are grouped into three sections, defined in `lib/navigation.ts`:
-- **Core:** Dashboard, User Stories, Activity
-- **Workflow:** Questions, UAT, Approvals
+- **Core:** Overview, Stories, Activity
+- **Workflow:** Clarify, Validation, Approvals, Compliance
 - **Admin:** Reports, Users, Settings, Notifications
 
 Items are filtered by user role. Active items display a gold (`border-propel-gold`) left border.
+
+**Navigation Label Updates (Jan 30, 2026):**
+- Dashboard → Overview
+- User Stories → Stories
+- Questions → Clarify
+- UAT → Validation
 
 ## User Setup (Important)
 
@@ -593,6 +627,31 @@ ALTER PUBLICATION supabase_realtime ADD TABLE user_stories;
 ALTER PUBLICATION supabase_realtime ADD TABLE story_comments;
 ```
 
+## Lessons Learned
+
+### Route Renaming (Jan 30, 2026)
+
+When renaming route directories (e.g., `uat` → `validation`), multiple layers must be updated:
+
+1. **Route directories** - Rename `app/(dashboard)/uat/` to `app/(dashboard)/validation/`
+2. **Component imports** - Update all `@/app/(dashboard)/uat/` imports to `@/app/(dashboard)/validation/`
+3. **Shared lib files** - If `lib/uat/` exists with shared utilities, either:
+   - Move to `lib/validation/` (preferred for consistency)
+   - Or update all imports to continue using old path
+4. **Navigation config** - Update `lib/navigation.ts` route paths
+5. **Middleware** - Update route arrays in `lib/supabase/middleware.ts`
+6. **revalidatePath calls** - Server actions often call `revalidatePath("/uat/...")` - must update these too
+7. **Link hrefs** - Update any hardcoded `href="/uat/..."` in components
+
+**Common pitfall:** Updating app route imports but forgetting shared lib imports causes Vercel build to fail with "Module not found" errors even though local dev works (due to cached .next directory).
+
+### Vercel Deployment Cache Issues
+
+When routes are renamed but old routes still appear in production:
+1. Go to Vercel Dashboard → Project → Settings → Data Cache
+2. Purge all caches (CDN Cache + Data Cache)
+3. Redeploy without cache: `vercel --force`
+
 ## Troubleshooting
 
 | Symptom | Cause | Fix |
@@ -611,6 +670,8 @@ ALTER PUBLICATION supabase_realtime ADD TABLE story_comments;
 | "no unique constraint matching given keys for referenced table" | Foreign key references column without PRIMARY KEY or UNIQUE constraint | Add `UNIQUE` constraint: `ALTER TABLE x ADD CONSTRAINT x_id_unique UNIQUE (id);` |
 | "cannot drop constraint X because other objects depend on it" | Trying to change primary key that other tables reference | Keep existing primary key, add UNIQUE constraint on new column instead |
 | Migration fails on index creation for missing column | `CREATE INDEX` on column that doesn't exist in legacy table | Use conditional index creation in DO block, or add columns first |
+| Vercel build fails with "Module not found" after route rename | App route imports updated but `lib/` shared files not moved | Move `lib/uat/` to `lib/validation/` OR update imports to continue using old path |
+| Old routes still visible on Vercel after rename | CDN/Data cache serving stale content | Purge all caches in Vercel dashboard, redeploy with `--force` |
 
 ## Known Technical Debt
 
