@@ -683,6 +683,41 @@ When routes are renamed but old routes still appear in production:
 1. Go to Vercel Dashboard → Project → Settings → Data Cache
 2. Purge all caches (CDN Cache + Data Cache)
 3. Redeploy without cache: `vercel --force`
+4. Add environment variable `VERCEL_FORCE_NO_BUILD_CACHE=1` to skip build cache permanently
+
+### Route Groups and Vercel Build (Jan 31, 2026)
+
+**Problem:** Vercel build failed with:
+```
+ENOENT: no such file or directory, lstat '/vercel/path0/.next/server/app/(tester)/page_client-reference-manifest.js'
+```
+
+**Root Cause:** A `page.tsx` file in a Next.js Route Group (directories with parentheses like `(tester)`) was causing Vercel's build to fail when generating client reference manifests. This happened even though:
+- The local build succeeded
+- GitHub Actions CI passed
+- The code was valid Next.js
+
+**What Didn't Work:**
+- Converting to async server component with `redirect()`
+- Adding `return null` after redirect
+- Converting to `"use client"` component with `useRouter`
+- Clearing Vercel build cache
+- Setting `VERCEL_FORCE_NO_BUILD_CACHE=1`
+- Redeploying with cache unchecked
+
+**What Fixed It:**
+Delete the `page.tsx` file from the route group entirely:
+```bash
+rm app/(tester)/page.tsx
+```
+
+**Why This Works:**
+Route Groups (directories with parentheses) don't add URL segments. A `page.tsx` at `app/(tester)/page.tsx` would create a route at `/` (root), not `/tester`. Since the route group is just for organization, it doesn't need a root page - users access sub-routes directly (`/my-tests`, `/execute/[id]`, etc.).
+
+**Key Takeaway:**
+- Route Groups are for **organization only**, not for creating routes
+- Don't add `page.tsx` to route group root directories unless you specifically want a root route
+- If you need a redirect from the group "root", handle it in middleware or `next.config.js` redirects instead
 
 ## Troubleshooting
 
@@ -704,6 +739,7 @@ When routes are renamed but old routes still appear in production:
 | Migration fails on index creation for missing column | `CREATE INDEX` on column that doesn't exist in legacy table | Use conditional index creation in DO block, or add columns first |
 | Vercel build fails with "Module not found" after route rename | App route imports updated but `lib/` shared files not moved | Move `lib/uat/` to `lib/validation/` OR update imports to continue using old path |
 | Old routes still visible on Vercel after rename | CDN/Data cache serving stale content | Purge all caches in Vercel dashboard, redeploy with `--force` |
+| Vercel build fails with `page_client-reference-manifest.js` ENOENT | `page.tsx` in Route Group root causing manifest generation issues | Delete the `page.tsx` from route group root - route groups don't need root pages |
 
 ## Known Technical Debt
 

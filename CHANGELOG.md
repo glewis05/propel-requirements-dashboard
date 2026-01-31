@@ -16,11 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Module resolution error** - Corrected `@hookform/resolvers-v4/zod` to `@hookform/resolvers/zod` in rule update components
 - **Stale cache invalidation** - Updated 25+ `revalidatePath` calls from `/uat/*` to `/validation/*` across 8 action files
 - **Broken navigation** - Fixed `/uat` link to `/validation` in test-patients page
+- **Vercel build failure** - Removed `app/(tester)/page.tsx` that caused `page_client-reference-manifest.js` ENOENT error on Vercel (route groups don't need root pages)
 
 ### Removed
 - **Duplicate `/app/tester/` directory** - Conflicted with protected `/app/(tester)/` route group (5 files deleted)
 - **Duplicate `/lib/uat/` directory** - Superseded by `/lib/validation/` (1 file deleted)
 - **Unused `TesterHeader.tsx`** - Duplicate of `tester-header.tsx` (1 file deleted)
+- **Route group root page** - `app/(tester)/page.tsx` removed to fix Vercel manifest generation
 
 ### Changed
 - Updated CLAUDE.md with codebase audit best practices and lessons learned
