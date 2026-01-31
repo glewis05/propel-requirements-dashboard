@@ -136,7 +136,7 @@ export function StoryComplianceSection({
                 <p>No compliance controls mapped to this story.</p>
                 {canEdit && (
                   <p className="text-sm mt-1">
-                    Click "Add Controls" to map regulatory requirements.
+                    Click &ldquo;Add Controls&rdquo; to map regulatory requirements.
                   </p>
                 )}
               </div>

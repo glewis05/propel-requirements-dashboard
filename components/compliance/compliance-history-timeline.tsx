@@ -110,7 +110,7 @@ export function ComplianceHistoryTimeline({
                   {/* Change reason */}
                   {entry.change_reason && (
                     <p className="mt-2 text-sm italic text-muted-foreground">
-                      "{entry.change_reason}"
+                      &ldquo;{entry.change_reason}&rdquo;
                     </p>
                   )}
 
