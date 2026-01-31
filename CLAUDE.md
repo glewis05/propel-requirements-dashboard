@@ -645,6 +645,38 @@ When renaming route directories (e.g., `uat` → `validation`), multiple layers 
 
 **Common pitfall:** Updating app route imports but forgetting shared lib imports causes Vercel build to fail with "Module not found" errors even though local dev works (due to cached .next directory).
 
+### Codebase Audit Best Practices (Jan 31, 2026)
+
+After iterative development, codebases accumulate inconsistencies. Run comprehensive audits to find:
+
+**Critical Issues to Check:**
+1. **Duplicate directories** - Watch for old/new route directories both existing (e.g., `/app/tester/` vs `/app/(tester)/`)
+2. **Stale revalidatePath calls** - Server actions cache invalidation must use current route names
+3. **Duplicate component files** - Different naming conventions (PascalCase vs kebab-case) can create two files
+4. **Broken imports** - Non-existent packages (e.g., `@hookform/resolvers-v4/zod` doesn't exist)
+5. **ESLint errors** - Unescaped characters in JSX cause build failures
+
+**Audit Commands:**
+```bash
+# Find stale revalidatePath calls
+grep -r 'revalidatePath("/old-route' app/
+
+# Find duplicate component imports
+grep -r 'ComponentName' --include="*.tsx" -l | sort
+
+# Check for module resolution issues
+npm run build 2>&1 | grep "Module not found"
+
+# Find all files with certain imports
+grep -r '@/lib/old-path' --include="*.ts" --include="*.tsx" -l
+```
+
+**Prevention:**
+- Run full build (`npm run build`) locally before pushing after major refactors
+- Use search-and-replace across entire codebase when renaming routes
+- Delete old directories/files immediately after migration, don't leave duplicates
+- Standardize file naming (prefer kebab-case for files, PascalCase for components)
+
 ### Vercel Deployment Cache Issues
 
 When routes are renamed but old routes still appear in production:
@@ -690,10 +722,7 @@ When routes are renamed but old routes still appear in production:
 
    **Proper pattern:** Create `lib/actions/` for shared server actions, or pass actions as props from page components.
 
-3. **Legacy `/tester` route (no parentheses)** - Old tester routes exist at `app/tester/` alongside new `app/(tester)/`. These legacy routes import directly from `app/(dashboard)/` which violates module boundaries. Should consolidate to `app/(tester)/` and use shared code in `lib/`. Files:
-   - `app/tester/page.tsx` → imports from `@/app/(dashboard)/uat/cycles/cycle-actions`
-   - `app/tester/cycle/[cycleId]/acknowledge/page.tsx` → imports from `@/app/(dashboard)/uat/cycles/cycle-actions`
-   - `app/tester/cycle/[cycleId]/test/[executionId]/page.tsx` → imports from `@/app/(dashboard)/uat/test-patients/test-patient-actions`
+3. ~~**Legacy `/tester` route (no parentheses)**~~ - **RESOLVED (Jan 31, 2026)** - Deleted `app/tester/` directory and `lib/uat/` duplicate. All tester routes now use `app/(tester)/` with proper middleware protection.
 
 ## Changelog
 

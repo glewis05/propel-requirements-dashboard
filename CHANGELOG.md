@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.9.1] - 2026-01-31
+
+### Fixed
+- **ESLint build errors** - Fixed unescaped quote characters in `compliance-history-timeline.tsx` and `story-compliance-section.tsx`
+- **Module resolution error** - Corrected `@hookform/resolvers-v4/zod` to `@hookform/resolvers/zod` in rule update components
+- **Stale cache invalidation** - Updated 25+ `revalidatePath` calls from `/uat/*` to `/validation/*` across 8 action files
+- **Broken navigation** - Fixed `/uat` link to `/validation` in test-patients page
+
+### Removed
+- **Duplicate `/app/tester/` directory** - Conflicted with protected `/app/(tester)/` route group (5 files deleted)
+- **Duplicate `/lib/uat/` directory** - Superseded by `/lib/validation/` (1 file deleted)
+- **Unused `TesterHeader.tsx`** - Duplicate of `tester-header.tsx` (1 file deleted)
+
+### Changed
+- Updated CLAUDE.md with codebase audit best practices and lessons learned
+- Updated Project_Progress.md with Phase 10 cleanup documentation
+- Marked legacy `/tester` route technical debt as resolved
+
+---
+
 ## [0.9.0] - 2026-01-30
 
 ### Added
