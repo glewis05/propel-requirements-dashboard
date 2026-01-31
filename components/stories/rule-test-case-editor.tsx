@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { X, Save, Loader2 } from "lucide-react"
 import { useForm, Controller } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers-v4/zod"
+import { zodResolver } from "@hookform/resolvers/zod"
 import {
   PLATFORMS,
   TEST_TYPES,

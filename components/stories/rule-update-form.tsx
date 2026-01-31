@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers-v4/zod"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2, AlertCircle, ChevronDown, ChevronRight } from "lucide-react"
 import {
   ruleUpdateStorySchema,
