@@ -11,6 +11,22 @@ const nextConfig = {
     // Allow build to succeed even with ESLint errors
     ignoreDuringBuilds: true,
   },
+  // Redirects for route groups without root pages
+  async redirects() {
+    return [
+      {
+        source: '/',
+        has: [
+          {
+            type: 'cookie',
+            key: 'sb-royctwjkewpnrcqdyhzd-auth-token',
+          },
+        ],
+        destination: '/dashboard',
+        permanent: false,
+      },
+    ]
+  },
 }
 
 module.exports = nextConfig
